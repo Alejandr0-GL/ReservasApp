@@ -37,7 +37,7 @@ public partial class Usuario
 
     public bool Activo { get; set; }
 
-    public virtual Municipio Municipio { get; set; } = null!;
+    public virtual Municipio? Municipio { get; set; } = null!;
 
     public virtual ICollection<Reserva> Reservas { get; set; } = new List<Reserva>();
 }

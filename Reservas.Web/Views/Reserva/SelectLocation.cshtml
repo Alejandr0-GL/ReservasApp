@@ -5,137 +5,157 @@
 }
 
 <div class="container mt-4">
-    <div class="row">
-        <!-- Columna izquierda: formulario de fechas y resumen -->
-        <div class="col-md-2">
-            <div class="card mb-3">
-                <div class="card-header bg-light fw-bold">Mis Fechas</div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <label class="form-label small">Fecha de Llegada</label>
-                        <input type="date" id="fechaInicio" class="form-control" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Fecha de Salida</label>
-                        <input type="date" id="fechaFin" class="form-control" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Noches</label>
-                        <input type="number" id="noches" class="form-control" min="1" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Personas</label>
-                        <input type="number" id="personas" class="form-control" min="1" value="1" />
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="lavanderia" />
-                        <label class="form-check-label small" for="lavanderia">Servicio de Lavandería</label>
-                    </div>
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success">@TempData["MensajeExito"]</div>
+    }
 
-                    <hr />
-                    <div class="small">Total Reserva:</div>
-                    <div class="h5 text-danger" id="valorTotal">$0</div>
+    <form asp-action="Reservar" asp-controller="Reserva" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="SedeId" value="@Model.Sede?.SedeId" />
 
-                    <button class="btn btn-danger btn-sm mt-2 w-100">Reservar</button>
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+        <div class="row">
+            <!-- Columna izquierda: formulario de fechas y resumen -->
+            <div class="col-md-2">
+                <div class="card mb-3">
+                    <div class="card-header bg-light fw-bold">Mis Fechas</div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <label class="form-label small">Tipo de Reserva</label>
+                            <select id="tipoReserva" name="TipoReserva" class="form-select form-select-sm" required>
+                                <option value="Hospedaje" selected>Hospedaje</option>
+                                <option value="VisitaDia">Visita Día</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small">Reserva Padre (opcional)</label>
+                            <input type="number" name="ReservaPadreId" class="form-control" min="1" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small">Fecha de Llegada</label>
+                            <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Fecha de Salida</label>
+                            <input type="date" name="FechaFin" id="fechaFin" class="form-control" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Noches</label>
+                            <input type="number" id="noches" class="form-control" min="1" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Personas</label>
+                            <input type="number" name="Personas" id="personas" class="form-control" min="1" value="1" required />
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="lavanderia" name="IncluyeLavanderia" />
+                            <label class="form-check-label small" for="lavanderia">Servicio de Lavandería</label>
+                        </div>
+
+                        <hr />
+                        <div class="small">Total Reserva:</div>
+                        <div class="h5 text-danger" id="valorTotal">$0</div>
+
+                        <button type="submit" class="btn btn-danger btn-sm mt-2 w-100">Reservar</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Columna central: imagenes y descripción -->
-        <div class="col-md-8">
-            <h4 class="text-danger mb-3">@Model.Sede?.Nombre</h4>
-            <div class="card mb-3">
-                <div class="row g-0">
-                    <div class="col-md-5">
-                        <img src="@(Model.Sede?.ImagenPrincipalUrl ?? "/images/default-sede.jpg")" class="img-fluid p-2" alt="@Model.Sede?.Nombre" />
+            <!-- Columna central: imagenes y descripción -->
+            <div class="col-md-8">
+                <h4 class="text-danger mb-3">@Model.Sede?.Nombre</h4>
+                <div class="card mb-3">
+                    <div class="row g-0">
+                        <div class="col-md-5">
+                            <img src="@(Model.Sede?.ImagenPrincipalUrl ?? "/images/default-sede.jpg")" class="img-fluid p-2" alt="@Model.Sede?.Nombre" />
+                        </div>
+                        <div class="col-md-7">
+                            <div class="card-body small">
+                                <p>@Model.Sede?.DescripcionLarga</p>
+                                <p class="text-muted"><strong>Ubicación:</strong> @Model.Sede?.Ubicacion</p>
+                                <p class="text-muted"><strong>Capacidad total:</strong> @Model.Sede?.Espacios.Sum(e => e.Capacidad)</p>
+                                <a class="btn btn-outline-secondary btn-sm" href="#" target="_blank">Descargar ruta de llegada</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-7">
-                        <div class="card-body small">
-                            <p>@Model.Sede?.DescripcionLarga</p>
-                            <p class="text-muted"><strong>Ubicación:</strong> @Model.Sede?.Ubicacion</p>
-                            <p class="text-muted"><strong>Capacidad total:</strong> @Model.Sede?.Espacios.Sum(e => e.Capacidad)</p>
-                            <a class="btn btn-outline-secondary btn-sm" href="#" target="_blank">Descargar ruta de llegada</a>
+                </div>
+
+                <!-- Tabla de habitaciones / alojamientos -->
+                <div class="card">
+                    <div class="card-header bg-light fw-bold">Habitaciones / Alojamientos</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Detalle</th>
+                                        <th>Nro / Alojamiento</th>
+                                        <th>Capacidad</th>
+                                        <th>Tarifa día ordinario</th>
+                                        <th>Tarifa día especial</th>
+                                        <th>Disponibilidad</th>
+                                        <th>Reservar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var esp in Model.Espacios)
+                                    {
+                                        var tarifaEsp = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Baja")
+                                        ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Baja");
+
+                                        var tarifaEspecial = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Alta")
+                                        ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Alta");
+
+                                        <tr>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-detalle">🔍</button>
+                                                <div class="d-none descripcion">@esp.Descripcion</div>
+                                                <div class="d-none caracteristicas">@string.Join(", ", esp.Caracteristicas.Select(c => c.Nombre))</div>
+                                            </td>
+                                            <td>@esp.NumeroAlojamiento</td>
+                                            <td>@esp.Capacidad</td>
+                                            <td>@(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")</td>
+                                            <td>@(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioOrdinario) : "-")</td>
+                                            <td><span class="text-success">✔</span></td>
+                                            <td>
+                                                <input type="radio" name="EspacioId" value="@esp.EspacioId" class="form-check-input espacio-radio" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabla de habitaciones / alojamientos -->
-            <div class="card">
-                <div class="card-header bg-light fw-bold">Habitaciones / Alojamientos</div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Detalle</th>
-                                    <th>Nro / Alojamiento</th>
-                                    <th>Capacidad</th>
-                                    <th>Tarifa día ordinario</th>
-                                    <th>Tarifa día especial</th>
-                                    <th>Disponibilidad</th>
-                                    <th>Reservar</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var esp in Model.Espacios)
+            <!-- Columna derecha: resumen rápido / servicios -->
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header bg-light fw-bold">Servicios</div>
+                    <div class="card-body small">
+                        @if (Model.ServicioExtras != null && Model.ServicioExtras.Any())
+                        {
+                            <ul class="list-unstyled">
+                                @foreach (var se in Model.ServicioExtras)
                                 {
-                                    // buscar tarifa por espacio -> fallback a tarifa por sede (EspacioId == null)
-                                    var tarifaEsp = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Baja")
-                                    ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Baja");
-
-                                    var tarifaEspecial = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Alta")
-                                    ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Alta");
-
-                                    <tr>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary btn-detalle">🔍</button>
-                                            @* Hidden: descripción y características para el modal *@
-                                            <div class="d-none descripcion">@esp.Descripcion</div>
-                                            <div class="d-none caracteristicas">@string.Join(", ", esp.Caracteristicas.Select(c => c.Nombre))</div>
-                                        </td>
-                                        <td>@esp.NumeroAlojamiento</td>
-                                        <td>@esp.Capacidad</td>
-                                        <td>@(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")</td>
-                                        <td>@(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioOrdinario) : "-")</td>
-                                        <td>
-                                            @* Placeholder: la lógica real debe consultar disponibilidad *@
-                                            <span class="text-success">✔</span>
-                                        </td>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input" />
-                                        </td>
-                                    </tr>
+                                    <li>@se.Nombre - @string.Format("{0:C0}", se.Precio)</li>
                                 }
-                            </tbody>
-                        </table>
+                            </ul>
+                        }
+                        else
+                        {
+                            <div class="text-muted">No se ofrecen servicios adicionales.</div>
+                        }
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Columna derecha: resumen rápido / servicios -->
-        <div class="col-md-2">
-            <div class="card">
-                <div class="card-header bg-light fw-bold">Servicios</div>
-                <div class="card-body small">
-                    @if (Model.ServicioExtras != null && Model.ServicioExtras.Any())
-                    {
-                        <ul class="list-unstyled">
-                            @foreach (var se in Model.ServicioExtras)
-                            {
-                                <li>@se.Nombre - @string.Format("{0:C0}", se.Precio)</li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <div class="text-muted">No se ofrecen servicios adicionales.</div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
+    </form>
 </div>
 
 <!-- Modal de detalle de espacio -->
@@ -162,7 +182,6 @@
 
 @section Scripts {
     <script>
-        // Script sencillo para actualizar valor total (demo)
         function toNumber(v){ return v ? parseFloat(v.toString().replace(/[^0-9.-]+/g,"")) : 0; }
 
         document.getElementById('noches')?.addEventListener('input', updateTotal);
@@ -170,7 +189,6 @@
         document.getElementById('lavanderia')?.addEventListener('change', updateTotal);
 
         function updateTotal(){
-            // Demo: suma primeras tarifas encontradas multiplicadas por noches
             var noche = parseInt(document.getElementById('noches')?.value || 1);
             var baseCell = document.querySelector('table tbody tr td:nth-child(4)');
             var valor = 0;
@@ -183,7 +201,24 @@
             document.getElementById('valorTotal').innerText = total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
         }
 
-        // Modal detalle
+        // Toggle EspacioId cuando es visita día
+        (function () {
+            var tipo = document.getElementById('tipoReserva');
+            var radios = document.querySelectorAll('.espacio-radio');
+
+            function toggleEspacios(){
+                var visita = tipo.value === 'VisitaDia';
+                radios.forEach(function(r){
+                    r.checked = false;
+                    r.disabled = visita;
+                });
+            }
+
+            tipo?.addEventListener('change', toggleEspacios);
+            toggleEspacios();
+        })();
+
+        // Modal detalle (igual al actual)
         (function () {
             var detalleModalEl = document.getElementById('detalleModal');
             var detalleModal = detalleModalEl ? new bootstrap.Modal(detalleModalEl) : null;

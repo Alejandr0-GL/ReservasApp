@@ -16,6 +16,7 @@ namespace Reservas.Business
             // Registrar servicios de negocio
             services.AddScoped<ReservaService>();
             services.AddScoped<UsuarioService>();
+            services.AddScoped<SedeService>();
 
             return services;
         }

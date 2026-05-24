@@ -1,0 +1,26 @@
+﻿@using System.Security.Claims
+
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item align-self-center text-light me-3">
+            <i class="bi bi-person-circle"></i> Hola, <span class="fw-bold">@User.Identity.Name</span>
+        </li>
+        <li class="nav-item">
+            <form class="form-inline" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="btn btn-light btn-sm px-3 mt-1"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+            </form>
+        </li>
+    </ul>
+}
+else
+{
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+            <a class="btn btn-light btn-sm px-3 mt-1" asp-area="" asp-controller="Account" asp-action="Registro"><i class="bi bi-person-plus-fill"></i> Registrarse</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-light btn-sm px-3 mt-1" asp-area="" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión</a>
+        </li>
+    </ul>
+}

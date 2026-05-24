@@ -13,6 +13,14 @@ namespace Reservas.Web
 
             builder.Services.AddControllersWithViews();
 
+            //Cookies para manejar la sesión
+            builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/Account/Login"; // Ruta a la que redirige si no está autenticado
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Tiempo de expiración de sesión
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

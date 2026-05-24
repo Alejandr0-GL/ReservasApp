@@ -15,9 +15,9 @@ public partial class TarifaConfig
 
     public string TipoTemporada { get; set; } = null!;
 
-    public decimal PrecioOrdinario { get; set; }
+    public decimal? PrecioOrdinario { get; set; }
 
-    public decimal PrecioEspecial { get; set; }
+    public decimal? PrecioEspecial { get; set; }
 
     public bool EsVisitaDia { get; set; }
 

@@ -26,5 +26,16 @@ namespace Reservas.Business
                 .ToListAsync();
         }
 
+        //Obtiene detalles de una sede incluyendo espacios, tarifas y servicios para mostrarlo en los detalles
+        public async Task<Sede?> ObtenerSedeDetalleAsync(int sedeId)
+        {
+            return await _context.Sedes
+                .Include(s => s.Espacios)
+                    .ThenInclude(e => e.Caracteristicas)
+                .Include(s => s.TarifaConfigs)
+                .Include(s => s.ServicioExtras)
+                .FirstOrDefaultAsync(s => s.SedeId == sedeId);
+        }
+
     }
 }

@@ -86,6 +86,9 @@ public partial class FondoDbContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false);
 
+            entity.Property(e => e.Descripcion)
+                .HasColumnType("nvarchar(max)");
+
             entity.HasOne(d => d.Sede).WithMany(p => p.Espacios)
                 .HasForeignKey(d => d.SedeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

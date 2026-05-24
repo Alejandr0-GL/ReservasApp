@@ -14,6 +14,7 @@ public partial class Espacio
     public int Capacidad { get; set; }
 
     public bool Activo { get; set; }
+    public string? Descripcion { get; set; }
 
     public virtual ICollection<Reserva> Reservas { get; set; } = new List<Reserva>();
 

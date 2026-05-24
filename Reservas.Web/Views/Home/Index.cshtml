@@ -1,8 +1,123 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Reservas.Entities.Sede>
+
+@{
+    ViewData["Title"] = "Sedes Recreativas y Apartamentos - FODUN";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .fodun-header-tab {
+        background-color: #A61C24 !important; /* Rojo institucional FODUN */
+        color: white !important;
+        font-weight: bold;
+        border-radius: 4px 4px 0 0;
+    }
+    .fodun-btn-seleccionar {
+        background-color: #A61C24 !important;
+        color: white !important;
+        border: none;
+        font-weight: 500;
+        padding: 6px 20px;
+    }
+    .fodun-btn-seleccionar:hover {
+        background-color: #821218 !important;
+        color: white !important;
+    }
+    .nav-tabs-fodun .nav-link.active {
+        background-color: #FFFFFF !important;
+        color: #A61C24 !important;
+        font-weight: bold;
+        border-bottom-color: transparent;
+    }
+    .nav-tabs-fodun .nav-link {
+        color: #495057;
+        background-color: #E9ECEF;
+        margin-right: 2px;
+    }
+    .table-fodun th {
+        background-color: #E2E2E2 !important;
+        color: #333333;
+        font-weight: 500;
+        text-align: center;
+    }
+    .sede-img-preview {
+        width: 140px;
+        height: 95px;
+        object-fit: cover;
+        border: 1px solid #DDD;
+    }
+</style>
+
+<div class="container mt-4">
+    
+    <h3 class="text-danger fw-normal mb-4" style="color: #A61C24 !important;">Sedes Recreativas y Apartamentos</h3>
+
+    <ul class="nav nav-tabs nav-tabs-fodun border-0 mb-0">
+        <li class="nav-item">
+            <a class="nav-link active border-1" href="#">Sedes Recreativas y Apartamentos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Reserva" asp-action="MisReservas">Mis Reservas</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Reserva" asp-action="MisReservas">Actualizar Datos</a>
+        </li>
+    </ul>
+
+    <div class="border p-1 bg-white shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle table-fodun mb-0" style="border-top: 2px solid #A61C24;">
+                <thead>
+                    <tr>
+                        <th style="width: 160px;">Nombre</th>
+                        <th>Descripción</th>
+                        <th style="width: 140px;">Tipo</th>
+                        <th style="width: 140px;">Ubicación</th>
+                        <th style="width: 130px;">Seleccionar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var sede in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="text-center">
+                                        <img src="@(string.IsNullOrEmpty(sede.ImagenPrincipalUrl) ? "/images/default-sede.jpg" : sede.ImagenPrincipalUrl)" 
+                                             class="img-fluid sede-img-preview mb-1" alt="@sede.Nombre" />
+                                        <div class="small fw-bold text-secondary mt-1">@sede.Nombre</div>
+                                    </div>
+                                </td>
+                                
+                                <td class="text-muted small px-3" style="font-size: 0.85rem; line-height: 1.3;">
+                                    @sede.DescripcionCorta
+                                </td>
+                                
+                                <td class="text-center text-secondary small">
+                                    @sede.TipoSede
+                                </td>
+                                
+                                <td class="text-center text-secondary small">
+                                    @sede.Ubicacion
+                                </td>
+                                
+                                <td class="text-center">
+                                    <a asp-controller="Reserva" asp-action="Crear" asp-route-sedeId="@sede.SedeId" 
+                                       class="btn fodun-btn-seleccionar btn-sm shadow-sm">Seleccionar</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                No se encontraron sedes parametrizadas en la base de datos. Asegúrate de insertar registros en la tabla <code>Sede</code>.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

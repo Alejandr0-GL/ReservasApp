@@ -2,22 +2,24 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Web.Models;
 using System.Diagnostics;
+using Reservas.Business;
 
 namespace Reservas.Web.Controllers
 {
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly SedeService _sedeService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(SedeService sedeService)
         {
-            _logger = logger;
+            _sedeService = sedeService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var sedes = await _sedeService.ObtenerSedesActivasAsync();
+            return View(sedes);
         }
 
         public IActionResult Privacy()

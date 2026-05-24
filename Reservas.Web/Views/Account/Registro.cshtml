@@ -1,0 +1,180 @@
+﻿@model Reservas.Entities.Usuario
+
+@{
+    ViewData["Title"] = "Registro";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white text-center py-3">
+                    <h4 class="mb-0">Formulario de Registro de Asociados</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <form asp-action="Registro" asp-controller="Account" method="post" autocomplete="off">
+                        @Html.AntiForgeryToken()
+
+                        <h5 class="text-success border-bottom pb-2 mb-3"><i class="bi bi-person-fill"></i> 1. Información Personal</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NroDocumento" class="form-label fw-bold">Número de Documento</label>
+                                <input asp-for="NroDocumento" class="form-control" placeholder="Ej: 10203040" required />
+                                <span asp-validation-for="NroDocumento" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NombreCompleto" class="form-label fw-bold">Nombre Completo</label>
+                                <input asp-for="NombreCompleto" class="form-control" placeholder="Nombre y Apellidos" required />
+                                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento</label>
+                                <input asp-for="FechaNacimiento" type="date" class="form-control" required />
+                                <span asp-validation-for="FechaNacimiento" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Celular" class="form-label fw-bold">Celular</label>
+                                <input asp-for="Celular" class="form-control" placeholder="Ej: 3001234567" />
+                                <span asp-validation-for="Celular" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DireccionEmail" class="form-label fw-bold">Correo Electrónico</label>
+                            <input asp-for="DireccionEmail" type="email" class="form-control" placeholder="correo@ejemplo.com" required />
+                            <span asp-validation-for="DireccionEmail" class="text-danger small"></span>
+                        </div>
+
+                        <h5 class="text-success border-bottom pb-2 mb-3 mt-4"><i class="bi bi-geo-alt-fill"></i> 2. Ubicación de Residencia</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Departamento</label>
+                                <select id="ddlDepartamento" class="form-select" asp-items="ViewBag.Departamentos" required>
+                                    <option value="">-- Seleccione un Departamento --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MunicipioId" class="form-label fw-bold">Municipio / Ciudad</label>
+                                <select id="ddlMunicipio" asp-for="MunicipioId" class="form-select" required disabled>
+                                    <option value="">-- Seleccione primero un Departamento --</option>
+                                </select>
+                                <span asp-validation-for="MunicipioId" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Barrio" class="form-label fw-bold">Barrio</label>
+                                <input asp-for="Barrio" class="form-control" placeholder="Ej: Laureles" required />
+                                <span asp-validation-for="Barrio" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                <label asp-for="DireccionResidencia" class="form-label fw-bold">Dirección de Residencia</label>
+                                <input asp-for="DireccionResidencia" class="form-control" placeholder="Ej: Calle 45 # 12-34" required />
+                                <span asp-validation-for="DireccionResidencia" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="TelefonoResidencia" class="form-label fw-bold">Teléfono Fijo</label>
+                                <input asp-for="TelefonoResidencia" class="form-control" placeholder="Ej: 6012345" required />
+                                <span asp-validation-for="TelefonoResidencia" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <h5 class="text-success border-bottom pb-2 mb-3 mt-4"><i class="bi bi-shield-lock-fill"></i> 3. Seguridad de la Cuenta</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Pregunta Secreta (Recuperación)</label>
+                                <select asp-for="PreguntaSecreta" class="form-select" required>
+                                    <option value="">-- Elija una pregunta --</option>
+                                    <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
+                                    <option value="¿Cuál es la ciudad donde nacieron sus padres?">¿Cuál es la ciudad donde nacieron sus padres?</option>
+                                    <option value="¿Cuál fue su primer colegio?">¿Cuál fue su primer colegio?</option>
+                                    <option value="¿Cuál es su color favorito?">¿Cuál es su color favorito?</option>
+                                </select>
+                                <span asp-validation-for="PreguntaSecreta" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Respuesta Secreta</label>
+                                <input type="text" name="respuestaSecreta" class="form-control" placeholder="Su respuesta" required />
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Clave Numérica de Acceso (4 números)</label>
+                                <input type="password" name="clave" class="form-control text-center fs-5 fw-bold"
+                                       placeholder="Ej: 1234" pattern="\d{4}" maxlength="4" required style="letter-spacing: 0.3rem;" />
+                                <p class="text-muted small mt-1 mb-0">Esta clave se le solicitará mediante el teclado seguro al loguearse.</p>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <div class="form-check mb-2">
+                                    <input asp-for="AutorizaCorreo" class="form-check-input" type="checkbox" checked />
+                                    <label asp-for="AutorizaCorreo" class="form-check-label text-muted small">Autorizo envío de notificaciones al Correo Electrónico</label>
+                                </div>
+                                <div class="form-check">
+                                    <input asp-for="AutorizaCelular" class="form-check-input" type="checkbox" checked />
+                                    <label asp-for="AutorizaCelular" class="form-check-label text-muted small">Autorizo envío de notificaciones vía Celular / SMS</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                            <a asp-action="Login" class="btn btn-outline-secondary btn-lg px-4 me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-success btn-lg px-5">Completar Registro</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('ddlDepartamento').addEventListener('change', function () {
+            const departamentoId = this.value;
+            const ddlMunicipio = document.getElementById('ddlMunicipio');
+            console.log("Departamento seleccionado:", departamentoId);
+
+            // Limpiar municipios previos
+            ddlMunicipio.innerHTML = '<option value="">-- Seleccione un Municipio --</option>';
+
+            if (!departamentoId) {
+                ddlMunicipio.disabled = true;
+                return;
+            }
+
+            // Llamar al endpoint JSON del AccountController
+            fetch(`/Account/GetMunicipios?departamentoId=${departamentoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        data.forEach(m => {
+                            const option = document.createElement('option');
+                            option.value = m.id;
+                            option.textContent = m.nombre;
+                            ddlMunicipio.appendChild(option);
+                        });
+                        ddlMunicipio.disabled = false;
+                    } else {
+                        ddlMunicipio.innerHTML = '<option value="">No hay municipios cargados</option>';
+                        ddlMunicipio.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error cargando municipios:", error);
+                    ddlMunicipio.disabled = true;
+                });
+        });
+    </script>
+}

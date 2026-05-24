@@ -1,0 +1,89 @@
+﻿@{
+    ViewData["Title"] = "Iniciar Sesión";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">Módulo de Reservas - FODUN</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    @if (TempData["MensajeExito"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["MensajeExito"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <form asp-action="Login" asp-controller="Account" method="post" autocomplete="off">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="nroDocumento" class="form-label fw-bold">Número de Documento</label>
+                            <input type="number" id="nroDocumento" name="nroDocumento" class="form-control" placeholder="Ej: 10203040" required autofocus />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="clave" class="form-label fw-bold">Clave de Acceso (4 dígitos)</label>
+                            <input type="password" id="clave" name="clave" class="form-control bg-light text-center fs-4 fw-bold"
+                                   placeholder="****" maxlength="4" readonly required style="letter-spacing: 0.5rem;" />
+                        </div>
+
+                        <div class="mb-4">
+                            <p class="text-muted small text-center mb-2">Use el teclado virtual para digitar su clave numérica</p>
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mx-auto" style="max-width: 280px;">
+                                @{
+                                    //El orden cambia cada que se refrezca la pagina
+                                    var numerosAleatorios = Enumerable.Range(0, 10).OrderBy(n => Guid.NewGuid()).ToList();
+                                    foreach (var num in numerosAleatorios)
+                                    {
+                                        <button type="button" class="btn btn-outline-secondary fw-bold fs-5 btn-teclado"
+                                                style="width: 55px; height: 55px;" onclick="agregarNumero('@num')">
+                                            @num
+                                        </button>
+                                    }
+                                }
+                                <button type="button" class="btn btn-danger fw-bold text-uppercase col-5" onclick="borrarClave()">Borrar</button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Ingresar al Sistema</button>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="card-footer text-center py-3 bg-light">
+                    <p class="mb-1 small text-muted">¿No tienes cuenta de asociado?</p>
+                    <a asp-action="Registro" asp-controller="Account" class="fw-bold text-decoration-none">Regístrate aquí</a>
+                    <hr class="my-2" />
+                    <a href="#" class="small text-decoration-none text-secondary">¿Olvidó su contraseña?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const inputClave = document.getElementById('clave');
+
+        function agregarNumero(num) {
+            
+            //Maximo 4 digitos
+            if (inputClave.value.length < 4) {
+                inputClave.value += num;
+            }
+        }
+
+        function borrarClave() {
+            inputClave.value = '';
+        }
+    </script>
+}

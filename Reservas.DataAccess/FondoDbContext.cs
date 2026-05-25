@@ -44,6 +44,8 @@ public partial class FondoDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     public virtual DbSet<ResultadoDisponibilidad> ResultadosDisponibilidad { get; set; }
+    public virtual DbSet<ResultadoTarifa> ResultadosTarifa { get; set; }
+    public virtual DbSet<ResultadoCalculoTarifa> ResultadosCalculoTarifa { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -320,6 +322,8 @@ public partial class FondoDbContext : DbContext
         });
 
         modelBuilder.Entity<ResultadoDisponibilidad>().HasNoKey();
+        modelBuilder.Entity<ResultadoTarifa>().HasNoKey();
+        modelBuilder.Entity<ResultadoCalculoTarifa>().HasNoKey();
 
         OnModelCreatingPartial(modelBuilder);
     }
@@ -356,7 +360,35 @@ public partial class FondoDbContext : DbContext
     }
 
     // Procedimiento almacenado 3:
+    public async Task<List<ResultadoTarifa>> ObtenerTarifasAsync(int sedeId, string tipoTemporada, int numPersonas, int? espacioId)
+    {
+        var pSede = new SqlParameter("@SedeId", sedeId);
+        var pTemp = new SqlParameter("@TipoTemporada", tipoTemporada);
+        var pPers = new SqlParameter("@NumPersonas", numPersonas);
+        var pEsp = new SqlParameter("@EspacioId", (object?)espacioId ?? DBNull.Value);
+
+        return await ResultadosTarifa
+            .FromSqlRaw("EXEC dbo.sp_ObtenerTarifas @SedeId, @TipoTemporada, @NumPersonas, @EspacioId",
+                        pSede, pTemp, pPers, pEsp)
+            .ToListAsync();
+    }
 
     // Procedimiento almacenado 4:
+    public async Task<decimal> CalcularTarifaReservaAsync(int sedeId, int? espacioId, string tipoTemporada, int numHabitaciones, int numPersonas, int noches, string tipoReserva)
+    {
+        var pSede = new SqlParameter("@SedeId", sedeId);
+        var pEsp = new SqlParameter("@EspacioId", (object?)espacioId ?? DBNull.Value);
+        var pTemp = new SqlParameter("@TipoTemporada", tipoTemporada);
+        var pHab = new SqlParameter("@NumHabitaciones", numHabitaciones);
+        var pPers = new SqlParameter("@NumPersonas", numPersonas);
+        var pNoch = new SqlParameter("@Noches", noches);
+        var pTipo = new SqlParameter("@TipoReserva", tipoReserva);
+
+        return await ResultadosCalculoTarifa
+            .FromSqlRaw("EXEC dbo.sp_CalcularTarifaReserva @SedeId, @EspacioId, @TipoTemporada, @NumHabitaciones, @NumPersonas, @Noches, @TipoReserva",
+                        pSede, pEsp, pTemp, pHab, pPers, pNoch, pTipo)
+            .Select(r => r.ValorTotal)
+            .FirstOrDefaultAsync();
+    }
 
 }

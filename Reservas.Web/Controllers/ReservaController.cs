@@ -141,5 +141,27 @@ namespace Reservas.Web.Controllers
             var reservas = await _reservaService.ObtenerReservasUsuarioAsync(userId);
             return View(reservas);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Tarifas(int sedeId, DateTime fechaInicio, DateTime fechaFin, int personas)
+        {
+            if (fechaFin.Date < fechaInicio.Date || personas <= 0)
+            {
+                return BadRequest();
+            }
+
+            var tipoTemporada = await _reservaService.ObtenerTipoTemporadaAsync(fechaInicio, fechaFin);
+            var tarifas = await _reservaService.ObtenerTarifasAsync(sedeId, tipoTemporada, personas);
+
+            var resultado = tarifas.Select(t => new
+            {
+                t.EspacioId,
+                t.Capacidad,
+                t.PrecioOrdinario,
+                t.PrecioEspecial
+            });
+
+            return Json(new { tipoTemporada, tarifas = resultado });
+        }
     }
 }

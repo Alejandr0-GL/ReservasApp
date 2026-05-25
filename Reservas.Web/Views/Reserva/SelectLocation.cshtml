@@ -119,8 +119,12 @@
                                             </td>
                                             <td>@esp.NumeroAlojamiento</td>
                                             <td>@esp.Capacidad</td>
-                                            <td>@(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")</td>
-                                            <td>@(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioOrdinario) : "-")</td>
+                                            <td class="tarifa-ordinario" data-espacio-id="@esp.EspacioId">
+                                                @(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")
+                                            </td>
+                                            <td class="tarifa-especial" data-espacio-id="@esp.EspacioId">
+                                                @(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioEspecial) : "-")
+                                            </td>
                                             <td>
                                                 @if (!tieneFechas)
                                                 {
@@ -215,6 +219,11 @@
             s = s.replace(/\./g, '').replace(',', '.');
             var n = parseFloat(s);
             return isNaN(n) ? 0 : n;
+        }
+
+        function formatCurrency(v){
+            if (v === null || v === undefined) return '-';
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
         }
 
         function actualizarLavanderia(){
@@ -414,17 +423,89 @@
                 });
         }
 
+        function consultarTarifas(){
+            var sedeId = document.getElementById('sedeId')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+
+            if (!sedeId || !inicio || !fin || personas <= 0){
+                return;
+            }
+
+            var dInicio = new Date(inicio);
+            var dFin = new Date(fin);
+            if (dFin < dInicio){
+                return;
+            }
+
+            var url = '@Url.Action("Tarifas", "Reserva")'
+                + '?sedeId=' + encodeURIComponent(sedeId)
+                + '&fechaInicio=' + encodeURIComponent(inicio)
+                + '&fechaFin=' + encodeURIComponent(fin)
+                + '&personas=' + encodeURIComponent(personas);
+
+            fetch(url)
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(data){
+                    if (!data || !data.tarifas){
+                        return;
+                    }
+
+                    var mapa = new Map();
+                    var general = null;
+
+                    function esMejor(actual, candidato){
+                        if (!actual) return true;
+                        if (candidato.capacidad < actual.capacidad) return true;
+                        return false;
+                    }
+
+                    data.tarifas.forEach(function(t){
+                        if (t.espacioId === null || t.espacioId === undefined){
+                            if (esMejor(general, t)) general = t;
+                        } else {
+                            var actual = mapa.get(t.espacioId);
+                            if (esMejor(actual, t)) mapa.set(t.espacioId, t);
+                        }
+                    });
+
+                    document.querySelectorAll('.tarifa-ordinario').forEach(function(td){
+                        var id = parseInt(td.getAttribute('data-espacio-id'));
+                        var t = mapa.get(id) || general;
+                        td.textContent = t ? formatCurrency(t.precioOrdinario) : '-';
+                    });
+
+                    document.querySelectorAll('.tarifa-especial').forEach(function(td){
+                        var id = parseInt(td.getAttribute('data-espacio-id'));
+                        var t = mapa.get(id) || general;
+                        td.textContent = t ? formatCurrency(t.precioEspecial) : '-';
+                    });
+
+                    updateTotal();
+                })
+                .catch(function(){});
+        }
+
         document.getElementById('fechaInicio')?.addEventListener('change', function(){
             aplicarTipoReserva();
             consultarDisponibilidad();
+            consultarTarifas();
             calcularNoches();
         });
 
         document.getElementById('fechaFin')?.addEventListener('change', function(){
             aplicarTipoReserva();
             consultarDisponibilidad();
+            consultarTarifas();
             calcularNoches();
         });
+
+        document.getElementById('personas')?.addEventListener('input', function(){
+            consultarDisponibilidad();
+            consultarTarifas();
+            updateTotal();
+});
 
         (function () {
             var tipo = document.getElementById('tipoReserva');

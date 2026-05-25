@@ -42,47 +42,26 @@ namespace Reservas.Business
             int personas,
             bool incluyeLavanderia)
         {
-            decimal total;
+            var noches = Math.Max(1, (fechaFin.Date - fechaInicio.Date).Days);
+            var numHabitaciones = espacioId.HasValue ? 1 : 0;
 
-            if (tipoReserva == "VisitaDia")
+            var total = await _context.CalcularTarifaReservaAsync(
+                sedeId,
+                espacioId,
+                "Baja",
+                numHabitaciones,
+                personas,
+                noches,
+                tipoReserva);
+
+            if (incluyeLavanderia)
             {
-                var tarifaVisita = await _context.TarifaConfigs
-                    .Where(t => t.SedeId == sedeId && t.EsVisitaDia)
+                var precioLav = await _context.ServicioExtras
+                    .Where(s => s.SedeId == sedeId && s.Nombre == "Lavandería")
+                    .Select(s => s.Precio)
                     .FirstOrDefaultAsync();
 
-                var minAcomp = tarifaVisita?.MinAcompanantesTarifaEspecial ?? 5;
-                var precioExtra = tarifaVisita?.PrecioAcompananteAdicional ?? 5500m;
-
-                var extras = Math.Max(0, personas - (minAcomp - 1));
-                total = extras * precioExtra;
-            }
-            else
-            {
-                var tarifa = await _context.TarifaConfigs
-                    .Where(t => t.EspacioId == espacioId && t.TipoTemporada == "Baja")
-                    .Select(t => t.PrecioOrdinario)
-                    .FirstOrDefaultAsync() ?? 0m;
-
-                if (tarifa == 0)
-                {
-                    tarifa = await _context.TarifaConfigs
-                        .Where(t => t.SedeId == sedeId && t.EspacioId == null && t.TipoTemporada == "Baja")
-                        .Select(t => t.PrecioOrdinario)
-                        .FirstOrDefaultAsync() ?? 0m;
-                }
-
-                var noches = Math.Max(1, (fechaFin.Date - fechaInicio.Date).Days);
-                total = tarifa * noches;
-
-                if (incluyeLavanderia)
-                {
-                    var precioLav = await _context.ServicioExtras
-                        .Where(s => s.SedeId == sedeId && s.Nombre == "Lavandería")
-                        .Select(s => s.Precio)
-                        .FirstOrDefaultAsync();
-
-                    total += precioLav;
-                }
+                total += precioLav;
             }
 
             var reserva = new Reserva
@@ -116,6 +95,34 @@ namespace Reservas.Business
                 .Where(r => r.UsuarioId == usuarioId)
                 .OrderByDescending(r => r.CreadoEn)
                 .ToListAsync();
+        }
+
+        public async Task<string> ObtenerTipoTemporadaAsync(DateTime fechaInicio, DateTime fechaFin)
+        {
+            var inicio = DateOnly.FromDateTime(fechaInicio);
+            var fin = DateOnly.FromDateTime(fechaFin);
+
+            var tipos = await _context.Temporada
+                .Where(t => t.FechaInicio <= fin && t.FechaFin >= inicio)
+                .Select(t => t.Tipo)
+                .ToListAsync();
+
+            if (tipos.Count == 0)
+            {
+                return "Baja";
+            }
+
+            if (tipos.Contains("Alta"))
+            {
+                return "Alta";
+            }
+
+            return tipos.First();
+        }
+
+        public async Task<List<ResultadoTarifa>> ObtenerTarifasAsync(int sedeId, string tipoTemporada, int personas)
+        {
+            return await _context.ObtenerTarifasAsync(sedeId, tipoTemporada, personas, null);
         }
     }
 }

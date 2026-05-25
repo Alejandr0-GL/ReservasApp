@@ -106,5 +106,16 @@ namespace Reservas.Business
 
             return reserva;
         }
+
+        public async Task<List<Reserva>> ObtenerReservasUsuarioAsync(int usuarioId)
+        {
+            return await _context.Reservas
+                .AsNoTracking()
+                .Include(r => r.Sede)
+                .Include(r => r.Espacio)
+                .Where(r => r.UsuarioId == usuarioId)
+                .OrderByDescending(r => r.CreadoEn)
+                .ToListAsync();
+        }
     }
 }

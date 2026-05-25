@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = Model.Sede?.Nombre ?? "Reserva";
+    var tieneFechas = Model.FechaInicio.HasValue && Model.FechaFin.HasValue;
+    var disponibles = Model.Disponibilidades.Select(d => d.EspacioId).ToHashSet();
 }
 
 <div class="container mt-4">
@@ -12,7 +14,8 @@
 
     <form asp-action="Reservar" asp-controller="Reserva" method="post">
         @Html.AntiForgeryToken()
-        <input type="hidden" name="SedeId" value="@Model.Sede?.SedeId" />
+        <input type="hidden" name="SedeId" id="sedeId" value="@Model.Sede?.SedeId" />
+        <input type="hidden" name="IncluyeLavanderia" id="incluyeLavanderia" value="false" />
 
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
 
@@ -37,11 +40,11 @@
 
                         <div class="mb-2">
                             <label class="form-label small">Fecha de Llegada</label>
-                            <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required />
+                            <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
                         </div>
                         <div class="mb-2">
                             <label class="form-label small">Fecha de Salida</label>
-                            <input type="date" name="FechaFin" id="fechaFin" class="form-control" required />
+                            <input type="date" name="FechaFin" id="fechaFin" class="form-control" required value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
                         </div>
                         <div class="mb-2">
                             <label class="form-label small">Noches</label>
@@ -50,10 +53,6 @@
                         <div class="mb-2">
                             <label class="form-label small">Personas</label>
                             <input type="number" name="Personas" id="personas" class="form-control" min="1" value="1" required />
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="lavanderia" name="IncluyeLavanderia" />
-                            <label class="form-check-label small" for="lavanderia">Servicio de Lavandería</label>
                         </div>
 
                         <hr />
@@ -110,7 +109,9 @@
                                         var tarifaEspecial = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Alta")
                                         ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Alta");
 
-                                        <tr>
+                                        var disponible = !tieneFechas || disponibles.Contains(esp.EspacioId);
+
+                                        <tr data-espacio-id="@esp.EspacioId">
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-outline-secondary btn-detalle">🔍</button>
                                                 <div class="d-none descripcion">@esp.Descripcion</div>
@@ -120,9 +121,22 @@
                                             <td>@esp.Capacidad</td>
                                             <td>@(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")</td>
                                             <td>@(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioOrdinario) : "-")</td>
-                                            <td><span class="text-success">✔</span></td>
                                             <td>
-                                                <input type="radio" name="EspacioId" value="@esp.EspacioId" class="form-check-input espacio-radio" />
+                                                @if (!tieneFechas)
+                                                {
+                                                    <span class="text-muted disponibilidad" data-espacio-id="@esp.EspacioId">-</span>
+                                                }
+                                                else if (disponible)
+                                                {
+                                                    <span class="text-success disponibilidad" data-espacio-id="@esp.EspacioId">✔</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger disponibilidad" data-espacio-id="@esp.EspacioId">✖</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <input type="radio" name="EspacioId" value="@esp.EspacioId" class="form-check-input espacio-radio" data-espacio-id="@esp.EspacioId" disabled="@(disponible ? null : "disabled")" />
                                             </td>
                                         </tr>
                                     }
@@ -133,17 +147,29 @@
                 </div>
             </div>
 
-            <!-- Columna derecha: resumen rápido / servicios -->
+            <!-- Columna derecha: servicios adicionales -->
             <div class="col-md-2">
                 <div class="card">
-                    <div class="card-header bg-light fw-bold">Servicios</div>
+                    <div class="card-header bg-light fw-bold">Servicios adicionales</div>
                     <div class="card-body small">
                         @if (Model.ServicioExtras != null && Model.ServicioExtras.Any())
                         {
-                            <ul class="list-unstyled">
+                            <ul class="list-unstyled mb-0">
                                 @foreach (var se in Model.ServicioExtras)
                                 {
-                                    <li>@se.Nombre - @string.Format("{0:C0}", se.Precio)</li>
+                                    <li class="mb-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input servicio-extra" type="checkbox"
+                                                   id="servicio-@se.ServicioId"
+                                                   name="ServiciosExtras"
+                                                   value="@se.ServicioId"
+                                                   data-precio="@se.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                   data-es-lavanderia="@(se.Nombre == "Lavandería" ? "true" : "false")" />
+                                            <label class="form-check-label" for="servicio-@se.ServicioId">
+                                                @se.Nombre - @string.Format("{0:C0}", se.Precio)
+                                            </label>
+                                        </div>
+                                    </li>
                                 }
                             </ul>
                         }
@@ -182,43 +208,239 @@
 
 @section Scripts {
     <script>
-        function toNumber(v){ return v ? parseFloat(v.toString().replace(/[^0-9.-]+/g,"")) : 0; }
+        function toNumber(v){
+            if (!v) return 0;
+            var s = v.toString().trim();
+            s = s.replace(/[^0-9,.-]+/g, '');
+            s = s.replace(/\./g, '').replace(',', '.');
+            var n = parseFloat(s);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function actualizarLavanderia(){
+            var incluye = false;
+            document.querySelectorAll('.servicio-extra:checked').forEach(function(c){
+                if (c.getAttribute('data-es-lavanderia') === 'true'){
+                    incluye = true;
+                }
+            });
+            var hidden = document.getElementById('incluyeLavanderia');
+            if (hidden) hidden.value = incluye ? 'true' : 'false';
+        }
 
         document.getElementById('noches')?.addEventListener('input', updateTotal);
-        document.getElementById('personas')?.addEventListener('input', updateTotal);
-        document.getElementById('lavanderia')?.addEventListener('change', updateTotal);
+        document.getElementById('personas')?.addEventListener('input', function(){
+        consultarDisponibilidad();
+        updateTotal();
+});
+        document.querySelectorAll('.servicio-extra').forEach(function(c){
+            c.addEventListener('change', function(){
+                actualizarLavanderia();
+                updateTotal();
+            });
+        });
+        document.querySelectorAll('input[name="EspacioId"]').forEach(function(r){
+            r.addEventListener('change', updateTotal);
+        });
+
+        function tieneDatosMinimos(){
+            var tipo = document.getElementById('tipoReserva')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+            var radio = document.querySelector('input[name="EspacioId"]:checked');
+            return !!tipo && !!inicio && !!fin && personas > 0 && !!radio;
+        }
 
         function updateTotal(){
+            var totalEl = document.getElementById('valorTotal');
+            if (!tieneDatosMinimos()){
+                totalEl.innerText = '-';
+                actualizarLavanderia();
+                return;
+            }
+
             var noche = parseInt(document.getElementById('noches')?.value || 1);
-            var baseCell = document.querySelector('table tbody tr td:nth-child(4)');
+            var seleccionado = document.querySelector('input[name="EspacioId"]:checked');
+            var baseCell = seleccionado ? seleccionado.closest('tr')?.querySelector('td:nth-child(4)') : null;
+
             var valor = 0;
             if (baseCell){
                 var text = baseCell.textContent || baseCell.innerText;
                 valor = toNumber(text);
             }
-            var lav = document.getElementById('lavanderia')?.checked ? 18000 : 0;
-            var total = (valor * noche) + lav;
-            document.getElementById('valorTotal').innerText = total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+            var extras = 0;
+            document.querySelectorAll('.servicio-extra:checked').forEach(function(c){
+                var p = parseFloat(c.getAttribute('data-precio') || '0');
+                if (!isNaN(p)) extras += p;
+            });
+
+            var total = (valor * noche) + extras;
+            totalEl.innerText = total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+            actualizarLavanderia();
         }
 
-        // Toggle EspacioId cuando es visita día
+        var disponibilidadSet = null;
+
+        function aplicarDisponibilidad(){
+            var tipo = document.getElementById('tipoReserva');
+            var visita = tipo && tipo.value === 'VisitaDia';
+
+            document.querySelectorAll('.disponibilidad').forEach(function(el){
+                var id = parseInt(el.getAttribute('data-espacio-id'));
+                if (!disponibilidadSet){
+                    el.textContent = '-';
+                    el.className = 'text-muted disponibilidad';
+                    return;
+                }
+
+                if (disponibilidadSet.has(id)){
+                    el.textContent = '✔';
+                    el.className = 'text-success disponibilidad';
+                } else {
+                    el.textContent = '✖';
+                    el.className = 'text-danger disponibilidad';
+                }
+            });
+
+            document.querySelectorAll('.espacio-radio').forEach(function(r){
+                var id = parseInt(r.getAttribute('data-espacio-id'));
+                var disponible = !disponibilidadSet || disponibilidadSet.has(id);
+                r.disabled = visita || !disponible;
+                if (r.disabled) r.checked = false;
+            });
+
+            updateTotal();
+        }
+
+        function aplicarTipoReserva(){
+            var tipo = document.getElementById('tipoReserva');
+            var visita = tipo && tipo.value === 'VisitaDia';
+            var inicioInput = document.getElementById('fechaInicio');
+            var finInput = document.getElementById('fechaFin');
+            var nochesInput = document.getElementById('noches');
+
+            if (nochesInput) nochesInput.disabled = true;
+
+            if (visita){
+                if (nochesInput) nochesInput.value = '';
+                if (inicioInput && finInput){
+                    if (inicioInput.value) finInput.value = inicioInput.value;
+                    finInput.readOnly = true;
+                }
+            } else {
+                if (finInput) finInput.readOnly = false;
+            }
+        }
+
+        function calcularNoches(){
+            var tipo = document.getElementById('tipoReserva');
+            var visita = tipo && tipo.value === 'VisitaDia';
+            var nochesInput = document.getElementById('noches');
+
+            if (visita){
+                if (nochesInput) nochesInput.value = '';
+                updateTotal();
+                return;
+            }
+
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+
+            if (!inicio || !fin)
+            {
+                if (nochesInput) nochesInput.value = '';
+                updateTotal();
+                return;
+            }
+
+            var dInicio = new Date(inicio);
+            var dFin = new Date(fin);
+
+            if (dFin < dInicio){
+                if (nochesInput) nochesInput.value = '';
+                updateTotal();
+                return;
+            }
+
+            var diff = dFin - dInicio;
+            var nochesCalc = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            if (nochesInput) nochesInput.value = nochesCalc;
+
+            updateTotal();
+        }
+
+        function consultarDisponibilidad(){
+            var sedeId = document.getElementById('sedeId')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+
+            if (!sedeId || !inicio || !fin){
+                disponibilidadSet = null;
+                aplicarDisponibilidad();
+                return;
+            }
+
+            var dInicio = new Date(inicio);
+            var dFin = new Date(fin);
+            if (dFin < dInicio){
+                disponibilidadSet = null;
+                aplicarDisponibilidad();
+                return;
+            }
+
+            var url = '@Url.Action("Disponibilidad", "Reserva")'
+                + '?sedeId=' + encodeURIComponent(sedeId)
+                + '&fechaInicio=' + encodeURIComponent(inicio)
+                + '&fechaFin=' + encodeURIComponent(fin)
+                + '&personas=' + encodeURIComponent(personas);
+
+            fetch(url)
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(data){
+                    if (!data){
+                        disponibilidadSet = null;
+                    } else {
+                        disponibilidadSet = new Set(data.espacioIds || []);
+                    }
+                    aplicarDisponibilidad();
+                })
+                .catch(function(){
+                    disponibilidadSet = null;
+                    aplicarDisponibilidad();
+                });
+        }
+
+        document.getElementById('fechaInicio')?.addEventListener('change', function(){
+            aplicarTipoReserva();
+            consultarDisponibilidad();
+            calcularNoches();
+        });
+
+        document.getElementById('fechaFin')?.addEventListener('change', function(){
+            aplicarTipoReserva();
+            consultarDisponibilidad();
+            calcularNoches();
+        });
+
         (function () {
             var tipo = document.getElementById('tipoReserva');
-            var radios = document.querySelectorAll('.espacio-radio');
 
             function toggleEspacios(){
-                var visita = tipo.value === 'VisitaDia';
-                radios.forEach(function(r){
-                    r.checked = false;
-                    r.disabled = visita;
-                });
+                aplicarTipoReserva();
+                consultarDisponibilidad();
+                calcularNoches();
+                aplicarDisponibilidad();
             }
 
             tipo?.addEventListener('change', toggleEspacios);
-            toggleEspacios();
+            aplicarTipoReserva();
+            aplicarDisponibilidad();
         })();
 
-        // Modal detalle (igual al actual)
         (function () {
             var detalleModalEl = document.getElementById('detalleModal');
             var detalleModal = detalleModalEl ? new bootstrap.Modal(detalleModalEl) : null;
@@ -235,5 +457,10 @@
                 });
             });
         })();
+
+        aplicarTipoReserva();
+        consultarDisponibilidad();
+        calcularNoches();
+        updateTotal();
     </script>
 }

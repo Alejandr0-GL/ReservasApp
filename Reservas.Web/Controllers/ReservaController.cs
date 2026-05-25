@@ -1,12 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Business;
+using Reservas.Entities;
 using Reservas.Web.Models;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Reservas.Web.Controllers
 {
+    [Authorize]
     public class ReservaController : Controller
     {
         private readonly SedeService _sedeService;
@@ -19,20 +24,53 @@ namespace Reservas.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> SelectLocation(int sedeId)
+        public async Task<IActionResult> SelectLocation(int sedeId, DateTime? fechaInicio, DateTime? fechaFin)
         {
             var sede = await _sedeService.ObtenerSedeDetalleAsync(sedeId);
             if (sede == null) return NotFound();
+
+            var disponibilidades = new List<ResultadoDisponibilidad>();
+
+            if (fechaInicio.HasValue && fechaFin.HasValue && fechaFin.Value.Date >= fechaInicio.Value.Date)
+            {
+                disponibilidades = await _reservaService.ConsultarDisponibilidadAsync(sedeId, fechaInicio.Value, fechaFin.Value);
+            }
 
             var vm = new SelectLocationViewModel
             {
                 Sede = sede,
                 Espacios = sede.Espacios.OrderBy(e => e.NumeroAlojamiento).ToList(),
                 TarifaConfigs = sede.TarifaConfigs.ToList(),
-                ServicioExtras = sede.ServicioExtras.ToList()
+                ServicioExtras = sede.ServicioExtras.ToList(),
+                Disponibilidades = disponibilidades,
+                FechaInicio = fechaInicio,
+                FechaFin = fechaFin
             };
 
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Disponibilidad(int sedeId, DateTime fechaInicio, DateTime fechaFin, int? personas)
+        {
+            if (fechaFin.Date < fechaInicio.Date)
+            {
+                return BadRequest();
+            }
+
+            List<ResultadoDisponibilidad> disponibilidades;
+
+            if (personas.HasValue && personas.Value > 0)
+            {
+                disponibilidades = await _reservaService.ConsultarDisponibilidadPorCupoAsync(sedeId, fechaInicio, fechaFin, personas.Value);
+            }
+            else
+            {
+                disponibilidades = await _reservaService.ConsultarDisponibilidadAsync(sedeId, fechaInicio, fechaFin);
+            }
+
+            var espacioIds = disponibilidades.Select(d => d.EspacioId).ToList();
+            return Json(new { espacioIds });
         }
 
         [HttpPost]
@@ -91,6 +129,17 @@ namespace Reservas.Web.Controllers
 
             TempData["MensajeExito"] = "Reserva creada correctamente.";
             return RedirectToAction("SelectLocation", new { sedeId = model.SedeId });
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> MisReservas()
+        {
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            var reservas = await _reservaService.ObtenerReservasUsuarioAsync(userId);
+            return View(reservas);
         }
     }
 }

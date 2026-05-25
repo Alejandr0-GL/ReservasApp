@@ -1,4 +1,5 @@
 using Reservas.Entities;
+using System;
 using System.Collections.Generic;
 
 namespace Reservas.Web.Models
@@ -12,5 +13,11 @@ namespace Reservas.Web.Models
         public List<TarifaConfig> TarifaConfigs { get; set; } = new List<TarifaConfig>();
 
         public List<ServicioExtra> ServicioExtras { get; set; } = new List<ServicioExtra>();
+
+        public List<ResultadoDisponibilidad> Disponibilidades { get; set; } = new List<ResultadoDisponibilidad>();
+
+        public DateTime? FechaInicio { get; set; }
+
+        public DateTime? FechaFin { get; set; }
     }
 }

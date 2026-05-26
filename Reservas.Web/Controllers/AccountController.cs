@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Reservas.Business;
 using Reservas.Entities;
 using Reservas.Web.Models;
+using Reservas.Web.Services;
 using System.Security.Claims;
 
 namespace Reservas.Web.Controllers
@@ -13,9 +16,20 @@ namespace Reservas.Web.Controllers
     public class AccountController : Controller
     {
         private readonly UsuarioService _usuarioService;
-        public AccountController(UsuarioService usuarioService)
+        private readonly IMemoryCache _cache;
+        private readonly IEmailSender _emailSender;
+        private readonly SmtpSettings _smtpSettings;
+
+        public AccountController(
+            UsuarioService usuarioService,
+            IMemoryCache cache,
+            IEmailSender emailSender,
+            IOptions<SmtpSettings> smtpOptions)
         {
             _usuarioService = usuarioService;
+            _cache = cache;
+            _emailSender = emailSender;
+            _smtpSettings = smtpOptions.Value;
         }
 
         [HttpGet]
@@ -62,6 +76,103 @@ namespace Reservas.Web.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var usuario = await _usuarioService.ObtenerUsuarioPorDocumentoYCorreoAsync(model.NroDocumento, model.DireccionEmail);
+
+            if (usuario != null && usuario.AutorizaCorreo)
+            {
+                var token = Guid.NewGuid().ToString("N");
+                _cache.Set(GetTokenKey(token), usuario.UsuarioId, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                });
+
+                var baseUrl = string.IsNullOrWhiteSpace(_smtpSettings.BaseUrl)
+                    ? $"{Request.Scheme}://{Request.Host}"
+                    : _smtpSettings.BaseUrl.TrimEnd('/');
+
+                var link = $"{baseUrl}{Url.Action("ResetPassword", "Account", new { token })}";
+
+                var cuerpo = $@"
+<p>Hola {usuario.NombreCompleto},</p>
+<p>Recibimos una solicitud para restablecer tu clave de acceso.</p>
+<p><a href=""{link}"">Restablecer clave</a></p>
+<p>Este enlace expira en 30 minutos.</p>
+<p>Si no solicitaste este cambio, ignora este correo.</p>";
+
+                try
+                {
+                    await _emailSender.EnviarAsync(usuario.DireccionEmail, "Restablecer clave de acceso", cuerpo);
+                }
+                catch
+                {
+                    ModelState.AddModelError(string.Empty, "No se pudo enviar el correo. Intenta más tarde.");
+                    return View(model);
+                }
+            }
+
+            TempData["MensajeExito"] = "Si los datos coinciden, se enviará un correo con instrucciones.";
+            return RedirectToAction("Login");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                TempData["MensajeError"] = "El enlace no es válido.";
+                return RedirectToAction("Login");
+            }
+
+            if (!_cache.TryGetValue(GetTokenKey(token), out int _))
+            {
+                TempData["MensajeError"] = "El enlace ha expirado.";
+                return RedirectToAction("Login");
+            }
+
+            return View(new ResetPasswordViewModel { Token = token });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (!_cache.TryGetValue(GetTokenKey(model.Token), out int usuarioId))
+            {
+                ModelState.AddModelError(string.Empty, "El enlace ha expirado. Solicita uno nuevo.");
+                return View(model);
+            }
+
+            var actualizado = await _usuarioService.ActualizarClaveAsync(usuarioId, model.NuevaClave);
+            if (!actualizado)
+            {
+                ModelState.AddModelError(string.Empty, "No se pudo actualizar la clave.");
+                return View(model);
+            }
+
+            _cache.Remove(GetTokenKey(model.Token));
+            TempData["MensajeExito"] = "Clave actualizada correctamente.";
+            return RedirectToAction("Login");
+        }
 
         [HttpGet]
         public async Task<IActionResult> Registro()
@@ -74,7 +185,7 @@ namespace Reservas.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Registro (Usuario usuario, string clave, string respuestaSecreta)
+        public async Task<IActionResult> Registro(Usuario usuario, string clave, string respuestaSecreta)
         {
             if (ModelState.IsValid)
             {
@@ -95,18 +206,15 @@ namespace Reservas.Web.Controllers
             return View(usuario);
         }
 
-
         //Carga municipios dinámicamente
         [HttpGet]
         public async Task<JsonResult> GetMunicipios(int departamentoId)
         {
             var municipios = await _usuarioService.ObtenerMunicipiosPorDepartamentoAsync(departamentoId);
-            
+
             var resultado = municipios.Select(m => new { id = m.MunicipioId, nombre = m.Nombre }).ToList();
             return Json(resultado);
         }
-
-
 
         [HttpPost]
         public async Task<IActionResult> Logout()
@@ -224,5 +332,7 @@ namespace Reservas.Web.Controllers
             TempData["MensajeExito"] = "Cuenta eliminada correctamente.";
             return RedirectToAction("Login");
         }
+
+        private static string GetTokenKey(string token) => $"pwdreset:{token}";
     }
 }

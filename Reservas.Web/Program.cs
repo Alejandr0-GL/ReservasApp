@@ -1,4 +1,5 @@
 using Reservas.Business;
+using Reservas.Web.Services;
 
 namespace Reservas.Web
 {
@@ -12,6 +13,10 @@ namespace Reservas.Web
             builder.Services.AddBusinessServices(builder.Configuration);
 
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddMemoryCache();
+            builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+            builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
             //Cookies para manejar la sesión
             builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)

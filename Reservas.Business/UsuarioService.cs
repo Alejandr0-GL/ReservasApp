@@ -66,6 +66,60 @@ namespace Reservas.Business
                 .ToListAsync();
         }
 
+        public async Task<Usuario?> ObtenerUsuarioConMunicipioAsync(int usuarioId)
+        {
+            return await _context.Usuarios
+                .Include(u => u.Municipio)
+                .FirstOrDefaultAsync(u => u.UsuarioId == usuarioId);
+        }
+
+        public async Task<bool> ActualizarUsuarioAsync(Usuario datos)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.UsuarioId == datos.UsuarioId);
+
+            if (usuario == null)
+            {
+                return false;
+            }
+
+            var emailExiste = await _context.Usuarios
+                .AnyAsync(u => u.DireccionEmail == datos.DireccionEmail && u.UsuarioId != datos.UsuarioId);
+
+            if (emailExiste)
+            {
+                return false;
+            }
+
+            usuario.NombreCompleto = datos.NombreCompleto;
+            usuario.FechaNacimiento = datos.FechaNacimiento;
+            usuario.Celular = datos.Celular;
+            usuario.DireccionEmail = datos.DireccionEmail;
+            usuario.MunicipioId = datos.MunicipioId;
+            usuario.Barrio = datos.Barrio;
+            usuario.DireccionResidencia = datos.DireccionResidencia;
+            usuario.TelefonoResidencia = datos.TelefonoResidencia;
+            usuario.AutorizaCorreo = datos.AutorizaCorreo;
+            usuario.AutorizaCelular = datos.AutorizaCelular;
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DesactivarUsuarioAsync(int usuarioId)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.UsuarioId == usuarioId);
+
+            if (usuario == null)
+            {
+                return false;
+            }
+
+            usuario.Activo = false;
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
         //Hash
         private string CalcularHashSHA256(string texto)
         {

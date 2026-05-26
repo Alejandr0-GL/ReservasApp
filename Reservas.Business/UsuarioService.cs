@@ -35,7 +35,27 @@ namespace Reservas.Business
             }
 
             return null; //Clave incorrecta
-            
+
+        }
+
+        public async Task<Usuario?> ObtenerUsuarioPorDocumentoYCorreoAsync(string nroDocumento, string direccionEmail)
+        {
+            return await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.NroDocumento == nroDocumento && u.DireccionEmail == direccionEmail && u.Activo);
+        }
+
+        public async Task<bool> ActualizarClaveAsync(int usuarioId, string nuevaClave)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.UsuarioId == usuarioId && u.Activo);
+
+            if (usuario == null)
+            {
+                return false;
+            }
+
+            usuario.Clave = CalcularHashSHA256(nuevaClave);
+            return await _context.SaveChangesAsync() > 0;
         }
 
         //Registrar usuario

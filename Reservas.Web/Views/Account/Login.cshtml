@@ -21,6 +21,14 @@
                         </div>
                     }
 
+                    @if (TempData["MensajeError"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["MensajeError"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
                     <form asp-action="Login" asp-controller="Account" method="post" autocomplete="off">
@@ -61,7 +69,7 @@
                     <p class="mb-1 small text-muted">¿No tienes cuenta de asociado?</p>
                     <a asp-action="Registro" asp-controller="Account" class="fw-bold text-decoration-none">Regístrate aquí</a>
                     <hr class="my-2" />
-                    <a href="#" class="small text-decoration-none text-secondary">¿Olvidó su contraseña?</a>
+                    <a asp-action="ForgotPassword" asp-controller="Account" class="small text-decoration-none text-secondary">¿Olvidó su contraseña?</a>
                 </div>
             </div>
         </div>

@@ -216,5 +216,29 @@ namespace Reservas.Web.Controllers
 
             return Json(new { total });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarcarPagada(int reservaId)
+        {
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            await _reservaService.MarcarReservaPagadaAsync(reservaId, userId);
+
+            return RedirectToAction("MisReservas");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelarReserva(int reservaId)
+        {
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            await _reservaService.CancelarReservaAsync(reservaId, userId);
+
+            return RedirectToAction("MisReservas");
+        }
     }
 }

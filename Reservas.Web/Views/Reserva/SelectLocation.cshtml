@@ -55,7 +55,10 @@
                         <div class="small">Total Reserva:</div>
                         <div class="h5 text-danger" id="valorTotal">$0</div>
 
-                        <button type="submit" class="btn btn-danger btn-sm mt-2 w-100">Reservar</button>
+                        <div class="d-grid gap-2 mt-2">
+                            <button type="submit" class="btn btn-danger btn-sm w-100">Reservar</button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm w-100">Atrás</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -600,9 +603,25 @@
             }
         }
 
+        function aplicarMinFechas(){
+            var hoy = new Date();
+            var yyyy = hoy.getFullYear();
+            var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            var dd = String(hoy.getDate()).padStart(2, '0');
+            var hoyStr = yyyy + '-' + mm + '-' + dd;
+
+            var inicio = document.getElementById('fechaInicio');
+            var fin = document.getElementById('fechaFin');
+
+            if (inicio) inicio.min = hoyStr;
+            if (fin) fin.min = hoyStr;
+        }
+
         aplicarTipoReserva();
         consultarDisponibilidad();
         calcularNoches();
         updateTotal();
+        aplicarMinFechas();
+        validarFechas();
     </script>
 }

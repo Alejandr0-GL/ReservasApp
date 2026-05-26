@@ -53,6 +53,15 @@
                             </div>
                         </div>
 
+                        <div class="mb-2">
+                            <label class="form-label small">Fecha de Llegada</label>
+                            <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Fecha de Salida</label>
+                            <input type="date" name="FechaFin" id="fechaFin" class="form-control" required value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">Ingresar al Sistema</button>
                         </div>

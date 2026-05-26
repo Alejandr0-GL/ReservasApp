@@ -600,9 +600,25 @@
             }
         }
 
+        function aplicarMinFechas(){
+            var hoy = new Date();
+            var yyyy = hoy.getFullYear();
+            var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            var dd = String(hoy.getDate()).padStart(2, '0');
+            var hoyStr = yyyy + '-' + mm + '-' + dd;
+
+            var inicio = document.getElementById('fechaInicio');
+            var fin = document.getElementById('fechaFin');
+
+            if (inicio) inicio.min = hoyStr;
+            if (fin) fin.min = hoyStr;
+        }
+
         aplicarTipoReserva();
         consultarDisponibilidad();
         calcularNoches();
         updateTotal();
+        aplicarMinFechas();
+        validarFechas();
     </script>
 }

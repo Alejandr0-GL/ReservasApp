@@ -258,37 +258,61 @@
             var fin = document.getElementById('fechaFin')?.value;
             var personas = parseInt(document.getElementById('personas')?.value || '0');
             var radio = document.querySelector('input[name="EspacioId"]:checked');
-            return !!tipo && !!inicio && !!fin && personas > 0 && !!radio;
+
+            if (!tipo || !inicio || !fin || personas <= 0){
+                return false;
+            }
+
+            if (tipo === 'Hospedaje'){
+                return !!radio;
+            }
+
+            return true;
         }
 
-        function updateTotal(){
+        function consultarTotal(){
             var totalEl = document.getElementById('valorTotal');
+            var sedeId = document.getElementById('sedeId')?.value;
+            var tipo = document.getElementById('tipoReserva')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+            var radio = document.querySelector('input[name="EspacioId"]:checked');
+            var espacioId = radio ? radio.value : '';
+            var incluyeLavanderia = document.getElementById('incluyeLavanderia')?.value === 'true';
+
             if (!tieneDatosMinimos()){
                 totalEl.innerText = '-';
-                actualizarLavanderia();
                 return;
             }
 
-            var noche = parseInt(document.getElementById('noches')?.value || 1);
-            var seleccionado = document.querySelector('input[name="EspacioId"]:checked');
-            var baseCell = seleccionado ? seleccionado.closest('tr')?.querySelector('td:nth-child(4)') : null;
+            var url = '@Url.Action("CalcularTotal", "Reserva")'
+                + '?sedeId=' + encodeURIComponent(sedeId)
+                + '&espacioId=' + encodeURIComponent(espacioId)
+                + '&fechaInicio=' + encodeURIComponent(inicio)
+                + '&fechaFin=' + encodeURIComponent(fin)
+                + '&personas=' + encodeURIComponent(personas)
+                + '&tipoReserva=' + encodeURIComponent(tipo)
+                + '&incluyeLavanderia=' + encodeURIComponent(incluyeLavanderia);
 
-            var valor = 0;
-            if (baseCell){
-                var text = baseCell.textContent || baseCell.innerText;
-                valor = toNumber(text);
-            }
+            fetch(url)
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(data){
+                    if (!data || data.total === undefined || data.total === null){
+                        totalEl.innerText = '-';
+                        return;
+                    }
 
-            var extras = 0;
-            document.querySelectorAll('.servicio-extra:checked').forEach(function(c){
-                var p = parseFloat(c.getAttribute('data-precio') || '0');
-                if (!isNaN(p)) extras += p;
-            });
+                    totalEl.innerText = formatCurrency(data.total);
+                })
+                .catch(function(){
+                    totalEl.innerText = '-';
+                });
+        }
 
-            var total = (valor * noche) + extras;
-            totalEl.innerText = total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-
+        function updateTotal(){
             actualizarLavanderia();
+            consultarTotal();
         }
 
         var disponibilidadSet = null;

@@ -163,5 +163,37 @@ namespace Reservas.Web.Controllers
 
             return Json(new { tipoTemporada, tarifas = resultado });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> CalcularTotal(
+            int sedeId,
+            int? espacioId,
+            DateTime fechaInicio,
+            DateTime fechaFin,
+            int personas,
+            string tipoReserva,
+            bool incluyeLavanderia)
+        {
+            if (fechaFin.Date < fechaInicio.Date || personas <= 0 || string.IsNullOrWhiteSpace(tipoReserva))
+            {
+                return BadRequest();
+            }
+
+            if (tipoReserva == "Hospedaje" && espacioId == null)
+            {
+                return BadRequest();
+            }
+
+            var total = await _reservaService.CalcularTotalAsync(
+                sedeId,
+                espacioId,
+                tipoReserva,
+                fechaInicio,
+                fechaFin,
+                personas,
+                incluyeLavanderia);
+
+            return Json(new { total });
+        }
     }
 }

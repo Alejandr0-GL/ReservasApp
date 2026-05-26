@@ -45,14 +45,18 @@ namespace Reservas.Business
             var noches = Math.Max(1, (fechaFin.Date - fechaInicio.Date).Days);
             var numHabitaciones = espacioId.HasValue ? 1 : 0;
 
+            var tipoTemporada = await ObtenerTipoTemporadaAsync(fechaInicio, fechaFin);
+
             var total = await _context.CalcularTarifaReservaAsync(
                 sedeId,
                 espacioId,
-                "Baja",
+                tipoTemporada,
                 numHabitaciones,
                 personas,
                 noches,
-                tipoReserva);
+                tipoReserva,
+                fechaInicio,
+                fechaFin);
 
             if (incluyeLavanderia)
             {
@@ -123,6 +127,44 @@ namespace Reservas.Business
         public async Task<List<ResultadoTarifa>> ObtenerTarifasAsync(int sedeId, string tipoTemporada, int personas)
         {
             return await _context.ObtenerTarifasAsync(sedeId, tipoTemporada, personas, null);
+        }
+
+        public async Task<decimal> CalcularTotalAsync(
+            int sedeId,
+            int? espacioId,
+            string tipoReserva,
+            DateTime fechaInicio,
+            DateTime fechaFin,
+            int personas,
+            bool incluyeLavanderia)
+        {
+            var noches = Math.Max(1, (fechaFin.Date - fechaInicio.Date).Days);
+            var numHabitaciones = espacioId.HasValue ? 1 : 0;
+
+            var tipoTemporada = await ObtenerTipoTemporadaAsync(fechaInicio, fechaFin);
+
+            var total = await _context.CalcularTarifaReservaAsync(
+                sedeId,
+                espacioId,
+                tipoTemporada,
+                numHabitaciones,
+                personas,
+                noches,
+                tipoReserva,
+                fechaInicio,
+                fechaFin);
+
+            if (incluyeLavanderia)
+            {
+                var precioLav = await _context.ServicioExtras
+                    .Where(s => s.SedeId == sedeId && s.Nombre == "Lavandería")
+                    .Select(s => s.Precio)
+                    .FirstOrDefaultAsync();
+
+                total += precioLav;
+            }
+
+            return total;
         }
     }
 }

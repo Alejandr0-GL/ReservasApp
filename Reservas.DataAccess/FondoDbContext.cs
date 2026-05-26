@@ -374,7 +374,16 @@ public partial class FondoDbContext : DbContext
     }
 
     // Procedimiento almacenado 4:
-    public async Task<decimal> CalcularTarifaReservaAsync(int sedeId, int? espacioId, string tipoTemporada, int numHabitaciones, int numPersonas, int noches, string tipoReserva)
+    public async Task<decimal> CalcularTarifaReservaAsync(
+        int sedeId,
+        int? espacioId,
+        string tipoTemporada,
+        int numHabitaciones,
+        int numPersonas,
+        int noches,
+        string tipoReserva,
+        DateTime fechaInicio,
+        DateTime fechaFin)
     {
         var pSede = new SqlParameter("@SedeId", sedeId);
         var pEsp = new SqlParameter("@EspacioId", (object?)espacioId ?? DBNull.Value);
@@ -383,12 +392,14 @@ public partial class FondoDbContext : DbContext
         var pPers = new SqlParameter("@NumPersonas", numPersonas);
         var pNoch = new SqlParameter("@Noches", noches);
         var pTipo = new SqlParameter("@TipoReserva", tipoReserva);
+        var pIni = new SqlParameter("@FechaInicio", fechaInicio.Date);
+        var pFin = new SqlParameter("@FechaFin", fechaFin.Date);
 
         return await ResultadosCalculoTarifa
-            .FromSqlRaw("EXEC dbo.sp_CalcularTarifaReserva @SedeId, @EspacioId, @TipoTemporada, @NumHabitaciones, @NumPersonas, @Noches, @TipoReserva",
-                        pSede, pEsp, pTemp, pHab, pPers, pNoch, pTipo)
-            .Select(r => r.ValorTotal)
-            .FirstOrDefaultAsync();
+            .FromSqlRaw("EXEC dbo.sp_CalcularTarifaReserva @SedeId, @EspacioId, @TipoTemporada, @NumHabitaciones, @NumPersonas, @Noches, @TipoReserva, @FechaInicio, @FechaFin",
+                        pSede, pEsp, pTemp, pHab, pPers, pNoch, pTipo, pIni, pFin)
+            .ToListAsync()
+            .ContinueWith(t => t.Result.Select(r => r.ValorTotal).FirstOrDefault());
     }
 
 }

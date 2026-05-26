@@ -66,7 +66,7 @@
                         <th>Fecha Llegada</th>
                         <th>Fecha Salida</th>
                         <th>No. Personas</th>
-                        <th>No. Habitaciones</th>
+                        <th>Tipo de visita</th>
                         <th>Valor Total</th>
                         <th>Comprobante de Pago</th>
                     </tr>
@@ -76,15 +76,13 @@
                     {
                         foreach (var r in Model)
                         {
-                            var habitaciones = r.TipoReserva == "Hospedaje" && r.EspacioId.HasValue ? 1 : 0;
-
                             <tr>
                                 <td>@r.Sede?.Nombre</td>
                                 <td class="text-center">@r.CreadoEn.ToString("dd-MM-yyyy")</td>
                                 <td class="text-center">@r.FechaInicio.ToString("dd-MM-yyyy")</td>
                                 <td class="text-center">@r.FechaFin.ToString("dd-MM-yyyy")</td>
                                 <td class="text-center">@r.Personas</td>
-                                <td class="text-center">@habitaciones</td>
+                                <td class="text-center">@r.TipoReserva</td>
                                 <td class="text-center">@string.Format("{0:C0}", r.ValorTotal)</td>
                                 <td class="text-center">
                                     @if (string.IsNullOrWhiteSpace(r.ComprobantePagoUrl))
@@ -102,7 +100,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 No tienes reservas registradas.
                             </td>
                         </tr>

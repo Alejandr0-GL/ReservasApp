@@ -34,11 +34,6 @@
                         </div>
 
                         <div class="mb-2">
-                            <label class="form-label small">Reserva Padre (opcional)</label>
-                            <input type="number" name="ReservaPadreId" class="form-control" min="1" />
-                        </div>
-
-                        <div class="mb-2">
                             <label class="form-label small">Fecha de Llegada</label>
                             <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
                         </div>
@@ -532,6 +527,7 @@
         }
 
         document.getElementById('fechaInicio')?.addEventListener('change', function(){
+            validarFechas();
             aplicarTipoReserva();
             consultarDisponibilidad();
             consultarTarifas();
@@ -539,6 +535,7 @@
         });
 
         document.getElementById('fechaFin')?.addEventListener('change', function(){
+            validarFechas();
             aplicarTipoReserva();
             consultarDisponibilidad();
             consultarTarifas();
@@ -582,6 +579,26 @@
                 });
             });
         })();
+
+        function validarFechas(){
+            var inicio = document.getElementById('fechaInicio');
+            var fin = document.getElementById('fechaFin');
+
+            if (!inicio || !fin) return;
+
+            if (inicio.value){
+                fin.min = inicio.value;
+            }
+
+            if (inicio.value && fin.value){
+                var dInicio = new Date(inicio.value);
+                var dFin = new Date(fin.value);
+
+                if (dFin < dInicio){
+                    fin.value = '';
+                }
+            }
+        }
 
         aplicarTipoReserva();
         consultarDisponibilidad();

@@ -131,7 +131,6 @@ namespace Reservas.Web.Controllers
                 userId,
                 model.SedeId,
                 model.EspacioId,
-                model.ReservaPadreId,
                 model.TipoReserva,
                 model.FechaInicio,
                 model.FechaFin,

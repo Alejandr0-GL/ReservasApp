@@ -8,8 +8,6 @@ namespace Reservas.Web.Models
 
         public int? EspacioId { get; set; }
 
-        public int? ReservaPadreId { get; set; }
-
         public string TipoReserva { get; set; } = "Hospedaje";
 
         public DateTime FechaInicio { get; set; }

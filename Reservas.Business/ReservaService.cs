@@ -72,7 +72,6 @@ namespace Reservas.Business
                 UsuarioId = usuarioId,
                 SedeId = sedeId,
                 EspacioId = espacioId,
-                ReservaPadreId = null,
                 TipoReserva = tipoReserva,
                 FechaInicio = DateOnly.FromDateTime(fechaInicio),
                 FechaFin = DateOnly.FromDateTime(fechaFin),

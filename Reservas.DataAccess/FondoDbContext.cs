@@ -31,10 +31,6 @@ public partial class FondoDbContext : DbContext
 
     public virtual DbSet<Sede> Sedes { get; set; }
 
-    public virtual DbSet<SedeImagen> SedeImagens { get; set; }
-
-    public virtual DbSet<ServicioBienestar> ServicioBienestars { get; set; }
-
     public virtual DbSet<ServicioExtra> ServicioExtras { get; set; }
 
     public virtual DbSet<TarifaConfig> TarifaConfigs { get; set; }
@@ -159,10 +155,6 @@ public partial class FondoDbContext : DbContext
                 .HasForeignKey(d => d.EspacioId)
                 .HasConstraintName("FK_Reserva_Espacio");
 
-            entity.HasOne(d => d.ReservaPadre).WithMany(p => p.InverseReservaPadre)
-                .HasForeignKey(d => d.ReservaPadreId)
-                .HasConstraintName("FK_Reserva_ReservaPadre");
-
             entity.HasOne(d => d.Sede).WithMany(p => p.Reservas)
                 .HasForeignKey(d => d.SedeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -188,48 +180,6 @@ public partial class FondoDbContext : DbContext
                 .HasMaxLength(30)
                 .IsUnicode(false);
             entity.Property(e => e.Ubicacion).HasMaxLength(100);
-
-            entity.HasMany(d => d.ServicioBienestars).WithMany(p => p.Sedes)
-                .UsingEntity<Dictionary<string, object>>(
-                    "SedeServicio",
-                    r => r.HasOne<ServicioBienestar>().WithMany()
-                        .HasForeignKey("ServicioBienestarId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_SedeServicio_Servicio"),
-                    l => l.HasOne<Sede>().WithMany()
-                        .HasForeignKey("SedeId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_SedeServicio_Sede"),
-                    j =>
-                    {
-                        j.HasKey("SedeId", "ServicioBienestarId").HasName("PK__SedeServ__126DE9FAC066EBAE");
-                        j.ToTable("SedeServicio");
-                    });
-        });
-
-        modelBuilder.Entity<SedeImagen>(entity =>
-        {
-            entity.HasKey(e => e.SedeImagenId).HasName("PK__SedeImag__ADD8F831D12DDBE7");
-
-            entity.ToTable("SedeImagen");
-
-            entity.Property(e => e.ImagenUrl).HasMaxLength(255);
-
-            entity.HasOne(d => d.Sede).WithMany(p => p.SedeImagens)
-                .HasForeignKey(d => d.SedeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_SedeImagen_Sede");
-        });
-
-        modelBuilder.Entity<ServicioBienestar>(entity =>
-        {
-            entity.HasKey(e => e.ServicioBienestarId).HasName("PK__Servicio__F1B3621F9437CEA6");
-
-            entity.ToTable("ServicioBienestar");
-
-            entity.HasIndex(e => e.Nombre, "UQ__Servicio__75E3EFCF58DB780E").IsUnique();
-
-            entity.Property(e => e.Nombre).HasMaxLength(100);
         });
 
         modelBuilder.Entity<ServicioExtra>(entity =>

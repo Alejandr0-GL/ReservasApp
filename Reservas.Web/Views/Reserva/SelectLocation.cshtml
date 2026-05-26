@@ -2,140 +2,190 @@
 
 @{
     ViewData["Title"] = Model.Sede?.Nombre ?? "Reserva";
+    var tieneFechas = Model.FechaInicio.HasValue && Model.FechaFin.HasValue;
+    var disponibles = Model.Disponibilidades.Select(d => d.EspacioId).ToHashSet();
 }
 
 <div class="container mt-4">
-    <div class="row">
-        <!-- Columna izquierda: formulario de fechas y resumen -->
-        <div class="col-md-2">
-            <div class="card mb-3">
-                <div class="card-header bg-light fw-bold">Mis Fechas</div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <label class="form-label small">Fecha de Llegada</label>
-                        <input type="date" id="fechaInicio" class="form-control" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Fecha de Salida</label>
-                        <input type="date" id="fechaFin" class="form-control" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Noches</label>
-                        <input type="number" id="noches" class="form-control" min="1" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Personas</label>
-                        <input type="number" id="personas" class="form-control" min="1" value="1" />
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="lavanderia" />
-                        <label class="form-check-label small" for="lavanderia">Servicio de Lavandería</label>
-                    </div>
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success">@TempData["MensajeExito"]</div>
+    }
 
-                    <hr />
-                    <div class="small">Total Reserva:</div>
-                    <div class="h5 text-danger" id="valorTotal">$0</div>
+    <form asp-action="Reservar" asp-controller="Reserva" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="SedeId" id="sedeId" value="@Model.Sede?.SedeId" />
+        <input type="hidden" name="IncluyeLavanderia" id="incluyeLavanderia" value="false" />
 
-                    <button class="btn btn-danger btn-sm mt-2 w-100">Reservar</button>
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+        <div class="row">
+            <!-- Columna izquierda: formulario de fechas y resumen -->
+            <div class="col-md-2">
+                <div class="card mb-3">
+                    <div class="card-header bg-light fw-bold">Mis Fechas</div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <label class="form-label small">Tipo de Reserva</label>
+                            <select id="tipoReserva" name="TipoReserva" class="form-select form-select-sm" required>
+                                <option value="Hospedaje" selected>Hospedaje</option>
+                                <option value="VisitaDia">Visita Día</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small">Reserva Padre (opcional)</label>
+                            <input type="number" name="ReservaPadreId" class="form-control" min="1" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small">Fecha de Llegada</label>
+                            <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Fecha de Salida</label>
+                            <input type="date" name="FechaFin" id="fechaFin" class="form-control" required value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Noches</label>
+                            <input type="number" id="noches" class="form-control" min="1" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Personas</label>
+                            <input type="number" name="Personas" id="personas" class="form-control" min="1" value="1" required />
+                        </div>
+
+                        <hr />
+                        <div class="small">Total Reserva:</div>
+                        <div class="h5 text-danger" id="valorTotal">$0</div>
+
+                        <button type="submit" class="btn btn-danger btn-sm mt-2 w-100">Reservar</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Columna central: imagenes y descripción -->
-        <div class="col-md-8">
-            <h4 class="text-danger mb-3">@Model.Sede?.Nombre</h4>
-            <div class="card mb-3">
-                <div class="row g-0">
-                    <div class="col-md-5">
-                        <img src="@(Model.Sede?.ImagenPrincipalUrl ?? "/images/default-sede.jpg")" class="img-fluid p-2" alt="@Model.Sede?.Nombre" />
+            <!-- Columna central: imagenes y descripción -->
+            <div class="col-md-8">
+                <h4 class="text-danger mb-3">@Model.Sede?.Nombre</h4>
+                <div class="card mb-3">
+                    <div class="row g-0">
+                        <div class="col-md-5">
+                            <img src="@(Model.Sede?.ImagenPrincipalUrl ?? "/images/default-sede.jpg")" class="img-fluid p-2" alt="@Model.Sede?.Nombre" />
+                        </div>
+                        <div class="col-md-7">
+                            <div class="card-body small">
+                                <p>@Model.Sede?.DescripcionLarga</p>
+                                <p class="text-muted"><strong>Ubicación:</strong> @Model.Sede?.Ubicacion</p>
+                                <p class="text-muted"><strong>Capacidad total:</strong> @Model.Sede?.Espacios.Sum(e => e.Capacidad)</p>
+                                <a class="btn btn-outline-secondary btn-sm" href="#" target="_blank">Descargar ruta de llegada</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-7">
-                        <div class="card-body small">
-                            <p>@Model.Sede?.DescripcionLarga</p>
-                            <p class="text-muted"><strong>Ubicación:</strong> @Model.Sede?.Ubicacion</p>
-                            <p class="text-muted"><strong>Capacidad total:</strong> @Model.Sede?.Espacios.Sum(e => e.Capacidad)</p>
-                            <a class="btn btn-outline-secondary btn-sm" href="#" target="_blank">Descargar ruta de llegada</a>
+                </div>
+
+                <!-- Tabla de habitaciones / alojamientos -->
+                <div class="card">
+                    <div class="card-header bg-light fw-bold">Habitaciones / Alojamientos</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Detalle</th>
+                                        <th>Nro / Alojamiento</th>
+                                        <th>Capacidad</th>
+                                        <th>Tarifa día ordinario</th>
+                                        <th>Tarifa día especial</th>
+                                        <th>Disponibilidad</th>
+                                        <th>Reservar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var esp in Model.Espacios)
+                                    {
+                                        var tarifaEsp = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Baja")
+                                        ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Baja");
+
+                                        var tarifaEspecial = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Alta")
+                                        ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Alta");
+
+                                        var disponible = !tieneFechas || disponibles.Contains(esp.EspacioId);
+
+                                        <tr data-espacio-id="@esp.EspacioId">
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-detalle">🔍</button>
+                                                <div class="d-none descripcion">@esp.Descripcion</div>
+                                                <div class="d-none caracteristicas">@string.Join(", ", esp.Caracteristicas.Select(c => c.Nombre))</div>
+                                            </td>
+                                            <td>@esp.NumeroAlojamiento</td>
+                                            <td>@esp.Capacidad</td>
+                                            <td class="tarifa-ordinario" data-espacio-id="@esp.EspacioId">
+                                                @(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")
+                                            </td>
+                                            <td class="tarifa-especial" data-espacio-id="@esp.EspacioId">
+                                                @(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioEspecial) : "-")
+                                            </td>
+                                            <td>
+                                                @if (!tieneFechas)
+                                                {
+                                                    <span class="text-muted disponibilidad" data-espacio-id="@esp.EspacioId">-</span>
+                                                }
+                                                else if (disponible)
+                                                {
+                                                    <span class="text-success disponibilidad" data-espacio-id="@esp.EspacioId">✔</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger disponibilidad" data-espacio-id="@esp.EspacioId">✖</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <input type="radio" name="EspacioId" value="@esp.EspacioId" class="form-check-input espacio-radio" data-espacio-id="@esp.EspacioId" disabled="@(disponible ? null : "disabled")" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabla de habitaciones / alojamientos -->
-            <div class="card">
-                <div class="card-header bg-light fw-bold">Habitaciones / Alojamientos</div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Detalle</th>
-                                    <th>Nro / Alojamiento</th>
-                                    <th>Capacidad</th>
-                                    <th>Tarifa día ordinario</th>
-                                    <th>Tarifa día especial</th>
-                                    <th>Disponibilidad</th>
-                                    <th>Reservar</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var esp in Model.Espacios)
+            <!-- Columna derecha: servicios adicionales -->
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header bg-light fw-bold">Servicios adicionales</div>
+                    <div class="card-body small">
+                        @if (Model.ServicioExtras != null && Model.ServicioExtras.Any())
+                        {
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var se in Model.ServicioExtras)
                                 {
-                                    // buscar tarifa por espacio -> fallback a tarifa por sede (EspacioId == null)
-                                    var tarifaEsp = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Baja")
-                                    ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Baja");
-
-                                    var tarifaEspecial = Model.TarifaConfigs.FirstOrDefault(t => t.EspacioId == esp.EspacioId && t.TipoTemporada == "Alta")
-                                    ?? Model.TarifaConfigs.FirstOrDefault(t => t.SedeId == Model.Sede.SedeId && t.EspacioId == null && t.TipoTemporada == "Alta");
-
-                                    <tr>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary btn-detalle">🔍</button>
-                                            @* Hidden: descripción y características para el modal *@
-                                            <div class="d-none descripcion">@esp.Descripcion</div>
-                                            <div class="d-none caracteristicas">@string.Join(", ", esp.Caracteristicas.Select(c => c.Nombre))</div>
-                                        </td>
-                                        <td>@esp.NumeroAlojamiento</td>
-                                        <td>@esp.Capacidad</td>
-                                        <td>@(tarifaEsp != null ? string.Format("{0:C0}", tarifaEsp.PrecioOrdinario) : "-")</td>
-                                        <td>@(tarifaEspecial != null ? string.Format("{0:C0}", tarifaEspecial.PrecioOrdinario) : "-")</td>
-                                        <td>
-                                            @* Placeholder: la lógica real debe consultar disponibilidad *@
-                                            <span class="text-success">✔</span>
-                                        </td>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input" />
-                                        </td>
-                                    </tr>
+                                    <li class="mb-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input servicio-extra" type="checkbox"
+                                                   id="servicio-@se.ServicioId"
+                                                   name="ServiciosExtras"
+                                                   value="@se.ServicioId"
+                                                   data-precio="@se.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                   data-es-lavanderia="@(se.Nombre == "Lavandería" ? "true" : "false")" />
+                                            <label class="form-check-label" for="servicio-@se.ServicioId">
+                                                @se.Nombre - @string.Format("{0:C0}", se.Precio)
+                                            </label>
+                                        </div>
+                                    </li>
                                 }
-                            </tbody>
-                        </table>
+                            </ul>
+                        }
+                        else
+                        {
+                            <div class="text-muted">No se ofrecen servicios adicionales.</div>
+                        }
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Columna derecha: resumen rápido / servicios -->
-        <div class="col-md-2">
-            <div class="card">
-                <div class="card-header bg-light fw-bold">Servicios</div>
-                <div class="card-body small">
-                    @if (Model.ServicioExtras != null && Model.ServicioExtras.Any())
-                    {
-                        <ul class="list-unstyled">
-                            @foreach (var se in Model.ServicioExtras)
-                            {
-                                <li>@se.Nombre - @string.Format("{0:C0}", se.Precio)</li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <div class="text-muted">No se ofrecen servicios adicionales.</div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
+    </form>
 </div>
 
 <!-- Modal de detalle de espacio -->
@@ -162,28 +212,340 @@
 
 @section Scripts {
     <script>
-        // Script sencillo para actualizar valor total (demo)
-        function toNumber(v){ return v ? parseFloat(v.toString().replace(/[^0-9.-]+/g,"")) : 0; }
-
-        document.getElementById('noches')?.addEventListener('input', updateTotal);
-        document.getElementById('personas')?.addEventListener('input', updateTotal);
-        document.getElementById('lavanderia')?.addEventListener('change', updateTotal);
-
-        function updateTotal(){
-            // Demo: suma primeras tarifas encontradas multiplicadas por noches
-            var noche = parseInt(document.getElementById('noches')?.value || 1);
-            var baseCell = document.querySelector('table tbody tr td:nth-child(4)');
-            var valor = 0;
-            if (baseCell){
-                var text = baseCell.textContent || baseCell.innerText;
-                valor = toNumber(text);
-            }
-            var lav = document.getElementById('lavanderia')?.checked ? 18000 : 0;
-            var total = (valor * noche) + lav;
-            document.getElementById('valorTotal').innerText = total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+        function toNumber(v){
+            if (!v) return 0;
+            var s = v.toString().trim();
+            s = s.replace(/[^0-9,.-]+/g, '');
+            s = s.replace(/\./g, '').replace(',', '.');
+            var n = parseFloat(s);
+            return isNaN(n) ? 0 : n;
         }
 
-        // Modal detalle
+        function formatCurrency(v){
+            if (v === null || v === undefined) return '-';
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+        }
+
+        function actualizarLavanderia(){
+            var incluye = false;
+            document.querySelectorAll('.servicio-extra:checked').forEach(function(c){
+                if (c.getAttribute('data-es-lavanderia') === 'true'){
+                    incluye = true;
+                }
+            });
+            var hidden = document.getElementById('incluyeLavanderia');
+            if (hidden) hidden.value = incluye ? 'true' : 'false';
+        }
+
+        document.getElementById('noches')?.addEventListener('input', updateTotal);
+        document.getElementById('personas')?.addEventListener('input', function(){
+        consultarDisponibilidad();
+        updateTotal();
+});
+        document.querySelectorAll('.servicio-extra').forEach(function(c){
+            c.addEventListener('change', function(){
+                actualizarLavanderia();
+                updateTotal();
+            });
+        });
+        document.querySelectorAll('input[name="EspacioId"]').forEach(function(r){
+            r.addEventListener('change', updateTotal);
+        });
+
+        function tieneDatosMinimos(){
+            var tipo = document.getElementById('tipoReserva')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+            var radio = document.querySelector('input[name="EspacioId"]:checked');
+
+            if (!tipo || !inicio || !fin || personas <= 0){
+                return false;
+            }
+
+            if (tipo === 'Hospedaje'){
+                return !!radio;
+            }
+
+            return true;
+        }
+
+        function consultarTotal(){
+            var totalEl = document.getElementById('valorTotal');
+            var sedeId = document.getElementById('sedeId')?.value;
+            var tipo = document.getElementById('tipoReserva')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+            var radio = document.querySelector('input[name="EspacioId"]:checked');
+            var espacioId = radio ? radio.value : '';
+            var incluyeLavanderia = document.getElementById('incluyeLavanderia')?.value === 'true';
+
+            if (!tieneDatosMinimos()){
+                totalEl.innerText = '-';
+                return;
+            }
+
+            var url = '@Url.Action("CalcularTotal", "Reserva")'
+                + '?sedeId=' + encodeURIComponent(sedeId)
+                + '&espacioId=' + encodeURIComponent(espacioId)
+                + '&fechaInicio=' + encodeURIComponent(inicio)
+                + '&fechaFin=' + encodeURIComponent(fin)
+                + '&personas=' + encodeURIComponent(personas)
+                + '&tipoReserva=' + encodeURIComponent(tipo)
+                + '&incluyeLavanderia=' + encodeURIComponent(incluyeLavanderia);
+
+            fetch(url)
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(data){
+                    if (!data || data.total === undefined || data.total === null){
+                        totalEl.innerText = '-';
+                        return;
+                    }
+
+                    totalEl.innerText = formatCurrency(data.total);
+                })
+                .catch(function(){
+                    totalEl.innerText = '-';
+                });
+        }
+
+        function updateTotal(){
+            actualizarLavanderia();
+            consultarTotal();
+        }
+
+        var disponibilidadSet = null;
+
+        function aplicarDisponibilidad(){
+            var tipo = document.getElementById('tipoReserva');
+            var visita = tipo && tipo.value === 'VisitaDia';
+
+            document.querySelectorAll('.disponibilidad').forEach(function(el){
+                var id = parseInt(el.getAttribute('data-espacio-id'));
+                if (!disponibilidadSet){
+                    el.textContent = '-';
+                    el.className = 'text-muted disponibilidad';
+                    return;
+                }
+
+                if (disponibilidadSet.has(id)){
+                    el.textContent = '✔';
+                    el.className = 'text-success disponibilidad';
+                } else {
+                    el.textContent = '✖';
+                    el.className = 'text-danger disponibilidad';
+                }
+            });
+
+            document.querySelectorAll('.espacio-radio').forEach(function(r){
+                var id = parseInt(r.getAttribute('data-espacio-id'));
+                var disponible = !disponibilidadSet || disponibilidadSet.has(id);
+                r.disabled = visita || !disponible;
+                if (r.disabled) r.checked = false;
+            });
+
+            updateTotal();
+        }
+
+        function aplicarTipoReserva(){
+            var tipo = document.getElementById('tipoReserva');
+            var visita = tipo && tipo.value === 'VisitaDia';
+            var inicioInput = document.getElementById('fechaInicio');
+            var finInput = document.getElementById('fechaFin');
+            var nochesInput = document.getElementById('noches');
+
+            if (nochesInput) nochesInput.disabled = true;
+
+            if (visita){
+                if (nochesInput) nochesInput.value = '';
+                if (inicioInput && finInput){
+                    if (inicioInput.value) finInput.value = inicioInput.value;
+                    finInput.readOnly = true;
+                }
+            } else {
+                if (finInput) finInput.readOnly = false;
+            }
+        }
+
+        function calcularNoches(){
+            var tipo = document.getElementById('tipoReserva');
+            var visita = tipo && tipo.value === 'VisitaDia';
+            var nochesInput = document.getElementById('noches');
+
+            if (visita){
+                if (nochesInput) nochesInput.value = '';
+                updateTotal();
+                return;
+            }
+
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+
+            if (!inicio || !fin)
+            {
+                if (nochesInput) nochesInput.value = '';
+                updateTotal();
+                return;
+            }
+
+            var dInicio = new Date(inicio);
+            var dFin = new Date(fin);
+
+            if (dFin < dInicio){
+                if (nochesInput) nochesInput.value = '';
+                updateTotal();
+                return;
+            }
+
+            var diff = dFin - dInicio;
+            var nochesCalc = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            if (nochesInput) nochesInput.value = nochesCalc;
+
+            updateTotal();
+        }
+
+        function consultarDisponibilidad(){
+            var sedeId = document.getElementById('sedeId')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+
+            if (!sedeId || !inicio || !fin){
+                disponibilidadSet = null;
+                aplicarDisponibilidad();
+                return;
+            }
+
+            var dInicio = new Date(inicio);
+            var dFin = new Date(fin);
+            if (dFin < dInicio){
+                disponibilidadSet = null;
+                aplicarDisponibilidad();
+                return;
+            }
+
+            var url = '@Url.Action("Disponibilidad", "Reserva")'
+                + '?sedeId=' + encodeURIComponent(sedeId)
+                + '&fechaInicio=' + encodeURIComponent(inicio)
+                + '&fechaFin=' + encodeURIComponent(fin)
+                + '&personas=' + encodeURIComponent(personas);
+
+            fetch(url)
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(data){
+                    if (!data){
+                        disponibilidadSet = null;
+                    } else {
+                        disponibilidadSet = new Set(data.espacioIds || []);
+                    }
+                    aplicarDisponibilidad();
+                })
+                .catch(function(){
+                    disponibilidadSet = null;
+                    aplicarDisponibilidad();
+                });
+        }
+
+        function consultarTarifas(){
+            var sedeId = document.getElementById('sedeId')?.value;
+            var inicio = document.getElementById('fechaInicio')?.value;
+            var fin = document.getElementById('fechaFin')?.value;
+            var personas = parseInt(document.getElementById('personas')?.value || '0');
+
+            if (!sedeId || !inicio || !fin || personas <= 0){
+                return;
+            }
+
+            var dInicio = new Date(inicio);
+            var dFin = new Date(fin);
+            if (dFin < dInicio){
+                return;
+            }
+
+            var url = '@Url.Action("Tarifas", "Reserva")'
+                + '?sedeId=' + encodeURIComponent(sedeId)
+                + '&fechaInicio=' + encodeURIComponent(inicio)
+                + '&fechaFin=' + encodeURIComponent(fin)
+                + '&personas=' + encodeURIComponent(personas);
+
+            fetch(url)
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(data){
+                    if (!data || !data.tarifas){
+                        return;
+                    }
+
+                    var mapa = new Map();
+                    var general = null;
+
+                    function esMejor(actual, candidato){
+                        if (!actual) return true;
+                        if (candidato.capacidad < actual.capacidad) return true;
+                        return false;
+                    }
+
+                    data.tarifas.forEach(function(t){
+                        if (t.espacioId === null || t.espacioId === undefined){
+                            if (esMejor(general, t)) general = t;
+                        } else {
+                            var actual = mapa.get(t.espacioId);
+                            if (esMejor(actual, t)) mapa.set(t.espacioId, t);
+                        }
+                    });
+
+                    document.querySelectorAll('.tarifa-ordinario').forEach(function(td){
+                        var id = parseInt(td.getAttribute('data-espacio-id'));
+                        var t = mapa.get(id) || general;
+                        td.textContent = t ? formatCurrency(t.precioOrdinario) : '-';
+                    });
+
+                    document.querySelectorAll('.tarifa-especial').forEach(function(td){
+                        var id = parseInt(td.getAttribute('data-espacio-id'));
+                        var t = mapa.get(id) || general;
+                        td.textContent = t ? formatCurrency(t.precioEspecial) : '-';
+                    });
+
+                    updateTotal();
+                })
+                .catch(function(){});
+        }
+
+        document.getElementById('fechaInicio')?.addEventListener('change', function(){
+            aplicarTipoReserva();
+            consultarDisponibilidad();
+            consultarTarifas();
+            calcularNoches();
+        });
+
+        document.getElementById('fechaFin')?.addEventListener('change', function(){
+            aplicarTipoReserva();
+            consultarDisponibilidad();
+            consultarTarifas();
+            calcularNoches();
+        });
+
+        document.getElementById('personas')?.addEventListener('input', function(){
+            consultarDisponibilidad();
+            consultarTarifas();
+            updateTotal();
+});
+
+        (function () {
+            var tipo = document.getElementById('tipoReserva');
+
+            function toggleEspacios(){
+                aplicarTipoReserva();
+                consultarDisponibilidad();
+                calcularNoches();
+                aplicarDisponibilidad();
+            }
+
+            tipo?.addEventListener('change', toggleEspacios);
+            aplicarTipoReserva();
+            aplicarDisponibilidad();
+        })();
+
         (function () {
             var detalleModalEl = document.getElementById('detalleModal');
             var detalleModal = detalleModalEl ? new bootstrap.Modal(detalleModalEl) : null;
@@ -200,5 +562,10 @@
                 });
             });
         })();
+
+        aplicarTipoReserva();
+        consultarDisponibilidad();
+        calcularNoches();
+        updateTotal();
     </script>
 }

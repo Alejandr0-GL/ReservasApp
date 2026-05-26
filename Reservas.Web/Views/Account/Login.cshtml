@@ -1,5 +1,7 @@
-﻿@{
+﻿@using System.Linq
+@{
     ViewData["Title"] = "Iniciar Sesión";
+    var numerosAleatorios = Enumerable.Range(0, 10).OrderBy(_ => Guid.NewGuid()).ToList();
 }
 
 <div class="container mt-5">
@@ -38,28 +40,15 @@
                         <div class="mb-4">
                             <p class="text-muted small text-center mb-2">Use el teclado virtual para digitar su clave numérica</p>
                             <div class="d-flex flex-wrap justify-content-center gap-2 mx-auto" style="max-width: 280px;">
-                                @{
-                                    //El orden cambia cada que se refrezca la pagina
-                                    var numerosAleatorios = Enumerable.Range(0, 10).OrderBy(n => Guid.NewGuid()).ToList();
-                                    foreach (var num in numerosAleatorios)
-                                    {
-                                        <button type="button" class="btn btn-outline-secondary fw-bold fs-5 btn-teclado"
-                                                style="width: 55px; height: 55px;" onclick="agregarNumero('@num')">
-                                            @num
-                                        </button>
-                                    }
+                                @foreach (var num in numerosAleatorios)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary fw-bold fs-5 btn-teclado"
+                                            style="width: 55px; height: 55px;" onclick="agregarNumero('@num')">
+                                        @num
+                                    </button>
                                 }
                                 <button type="button" class="btn btn-danger fw-bold text-uppercase col-5" onclick="borrarClave()">Borrar</button>
                             </div>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label small">Fecha de Llegada</label>
-                            <input type="date" name="FechaInicio" id="fechaInicio" class="form-control" required value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">Fecha de Salida</label>
-                            <input type="date" name="FechaFin" id="fechaFin" class="form-control" required value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
                         </div>
 
                         <div class="d-grid gap-2">

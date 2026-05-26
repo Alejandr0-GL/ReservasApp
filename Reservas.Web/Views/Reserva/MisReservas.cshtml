@@ -68,7 +68,6 @@
                         <th>No. Personas</th>
                         <th>Tipo de visita</th>
                         <th>Valor Total</th>
-                        <th>Comprobante de Pago</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,13 +84,31 @@
                                 <td class="text-center">@r.TipoReserva</td>
                                 <td class="text-center">@string.Format("{0:C0}", r.ValorTotal)</td>
                                 <td class="text-center">
-                                    @if (string.IsNullOrWhiteSpace(r.ComprobantePagoUrl))
+                                </td>
+                                <td class="text-center">
+                                    @if (r.Estado == "Pagada")
                                     {
-                                        <button type="button" class="btn btn-sm btn-danger">Enviar</button>
+                                        <span class="badge bg-success">Pagada</span>
+                                    }
+                                    else if (r.Estado == "Cancelada")
+                                    {
+                                        <span class="badge bg-secondary">Cancelada</span>
                                     }
                                     else
                                     {
-                                        <a class="btn btn-sm btn-outline-secondary" href="@r.ComprobantePagoUrl" target="_blank">Ver</a>
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <form asp-action="MarcarPagada" asp-controller="Reserva" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="reservaId" value="@r.ReservaId" />
+                                                <button type="submit" class="btn btn-sm btn-danger">Enviar</button>
+                                            </form>
+                                            <form asp-action="CancelarReserva" asp-controller="Reserva" method="post" class="d-inline"
+                                                  onsubmit="return confirm('¿Deseas cancelar esta reserva?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="reservaId" value="@r.ReservaId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary">Cancelar</button>
+                                            </form>
+                                        </div>
                                     }
                                 </td>
                             </tr>

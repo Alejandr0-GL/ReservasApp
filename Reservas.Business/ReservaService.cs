@@ -165,5 +165,40 @@ namespace Reservas.Business
 
             return total;
         }
+
+        public async Task<bool> MarcarReservaPagadaAsync(int reservaId, int usuarioId)
+        {
+            var reserva = await _context.Reservas
+                .FirstOrDefaultAsync(r => r.ReservaId == reservaId && r.UsuarioId == usuarioId);
+
+            if (reserva == null)
+            {
+                return false;
+            }
+
+            reserva.Estado = "Pagada";
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> CancelarReservaAsync(int reservaId, int usuarioId)
+        {
+            var reserva = await _context.Reservas
+                .FirstOrDefaultAsync(r => r.ReservaId == reservaId && r.UsuarioId == usuarioId);
+
+            if (reserva == null)
+            {
+                return false;
+            }
+
+            if (reserva.Estado == "Pagada")
+            {
+                return false;
+            }
+
+            reserva.Estado = "Cancelada";
+
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

@@ -4,139 +4,188 @@
     ViewData["Title"] = "Actualizar Datos";
 }
 
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white text-center py-3">
-                    <h4 class="mb-0">Actualizar Datos del Asociado</h4>
-                </div>
-                <div class="card-body p-4">
+<style>
+    .fodun-header-tab {
+        background-color: #A61C24 !important;
+        color: white !important;
+        font-weight: bold;
+        border-radius: 4px 4px 0 0;
+    }
+    .fodun-btn-seleccionar {
+        background-color: #A61C24 !important;
+        color: white !important;
+        border: none;
+        font-weight: 500;
+        padding: 6px 20px;
+    }
+    .fodun-btn-seleccionar:hover {
+        background-color: #821218 !important;
+        color: white !important;
+    }
+    .nav-tabs-fodun .nav-link.active {
+        background-color: #FFFFFF !important;
+        color: #A61C24 !important;
+        font-weight: bold;
+        border-bottom-color: transparent;
+    }
+    .nav-tabs-fodun .nav-link {
+        color: #495057;
+        background-color: #E9ECEF;
+        margin-right: 2px;
+    }
+    .table-fodun th {
+        background-color: #E2E2E2 !important;
+        color: #333333;
+        font-weight: 500;
+        text-align: center;
+    }
+</style>
 
-                    @if (TempData["MensajeExito"] != null)
-                    {
-                        <div class="alert alert-success">@TempData["MensajeExito"]</div>
-                    }
+<div class="container mt-4">
+    <h3 class="text-danger fw-normal mb-4" style="color: #A61C24 !important;">Actualizar Datos</h3>
 
-                    @if (TempData["MensajeError"] != null)
-                    {
-                        <div class="alert alert-danger">@TempData["MensajeError"]</div>
-                    }
+    <ul class="nav nav-tabs nav-tabs-fodun border-0 mb-0">
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Home" asp-action="Index">Sedes Recreativas y Apartamentos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Reserva" asp-action="MisReservas">Mis Reservas</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active border-1" href="#">Actualizar Datos</a>
+        </li>
+    </ul>
 
-                    @if (ViewData["MensajeExito"] != null)
-                    {
-                        <div class="alert alert-success">@ViewData["MensajeExito"]</div>
-                    }
+    <div class="border p-1 bg-white shadow-sm">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
 
-                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                        @if (TempData["MensajeExito"] != null)
+                        {
+                            <div class="alert alert-success">@TempData["MensajeExito"]</div>
+                        }
 
-                    <form asp-action="ActualizarDatos" asp-controller="Account" method="post" autocomplete="off">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="UsuarioId" />
+                        @if (TempData["MensajeError"] != null)
+                        {
+                            <div class="alert alert-danger">@TempData["MensajeError"]</div>
+                        }
 
-                        <h5 class="text-success border-bottom pb-2 mb-3">1. Información Personal</h5>
+                        @if (ViewData["MensajeExito"] != null)
+                        {
+                            <div class="alert alert-success">@ViewData["MensajeExito"]</div>
+                        }
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="NroDocumento" class="form-label fw-bold">Número de Documento</label>
-                                <input asp-for="NroDocumento" class="form-control" readonly />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="NombreCompleto" class="form-label fw-bold">Nombre Completo</label>
-                                <input asp-for="NombreCompleto" class="form-control" required />
-                                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
-                            </div>
-                        </div>
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="FechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento" type="date" class="form-control" required />
-                                <span asp-validation-for="FechaNacimiento" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Celular" class="form-label fw-bold">Celular</label>
-                                <input asp-for="Celular" class="form-control" />
-                                <span asp-validation-for="Celular" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="DireccionEmail" class="form-label fw-bold">Correo Electrónico</label>
-                            <input asp-for="DireccionEmail" type="email" class="form-control" required />
-                            <span asp-validation-for="DireccionEmail" class="text-danger small"></span>
-                        </div>
-
-                        <h5 class="text-success border-bottom pb-2 mb-3 mt-4">2. Ubicación de Residencia</h5>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="DepartamentoId" class="form-label fw-bold">Departamento</label>
-                                <select id="ddlDepartamento" asp-for="DepartamentoId" class="form-select" asp-items="ViewBag.Departamentos" required>
-                                    <option value="">-- Seleccione un Departamento --</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="MunicipioId" class="form-label fw-bold">Municipio / Ciudad</label>
-                                <select id="ddlMunicipio" asp-for="MunicipioId" class="form-select" asp-items="ViewBag.Municipios" required>
-                                    <option value="">-- Seleccione un Municipio --</option>
-                                </select>
-                                <span asp-validation-for="MunicipioId" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="Barrio" class="form-label fw-bold">Barrio</label>
-                                <input asp-for="Barrio" class="form-control" required />
-                                <span asp-validation-for="Barrio" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-5 mb-3">
-                                <label asp-for="DireccionResidencia" class="form-label fw-bold">Dirección de Residencia</label>
-                                <input asp-for="DireccionResidencia" class="form-control" required />
-                                <span asp-validation-for="DireccionResidencia" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label asp-for="TelefonoResidencia" class="form-label fw-bold">Teléfono Fijo</label>
-                                <input asp-for="TelefonoResidencia" class="form-control" required />
-                                <span asp-validation-for="TelefonoResidencia" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <h5 class="text-success border-bottom pb-2 mb-3 mt-4">3. Preferencias</h5>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input asp-for="AutorizaCorreo" class="form-check-input" type="checkbox" />
-                                    <label asp-for="AutorizaCorreo" class="form-check-label text-muted small">Autorizo envío de notificaciones al Correo Electrónico</label>
-                                </div>
-                                <div class="form-check">
-                                    <input asp-for="AutorizaCelular" class="form-check-input" type="checkbox" />
-                                    <label asp-for="AutorizaCelular" class="form-check-label text-muted small">Autorizo envío de notificaciones vía Celular / SMS</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
-                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 me-md-2">Atrás</a>
-                            <button type="submit" class="btn btn-success btn-lg px-5">Guardar Cambios</button>
-                        </div>
-                    </form>
-
-                    <hr class="my-4" />
-                    <div class="d-flex justify-content-end mb-3">
-                        <form asp-action="EliminarCuenta" asp-controller="Account" method="post"
-                              onsubmit="return confirm('¿Estás seguro de eliminar tu cuenta? Esta acción desactivará tu acceso.');">
+                        <form asp-action="ActualizarDatos" asp-controller="Account" method="post" autocomplete="off">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-danger">Eliminar mi cuenta</button>
-                        </form>
-                    </div>
-                    <div class="alert alert-warning small">
-                        Al eliminar tu cuenta, se desactiva el acceso al sistema.
-                    </div>
-                    
+                            <input type="hidden" asp-for="UsuarioId" />
 
+                            <h5 class="text-success border-bottom pb-2 mb-3">1. Información Personal</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="NroDocumento" class="form-label fw-bold">Número de Documento</label>
+                                    <input asp-for="NroDocumento" class="form-control" readonly />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="NombreCompleto" class="form-label fw-bold">Nombre Completo</label>
+                                    <input asp-for="NombreCompleto" class="form-control" required />
+                                    <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="FechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento</label>
+                                    <input asp-for="FechaNacimiento" type="date" class="form-control" required />
+                                    <span asp-validation-for="FechaNacimiento" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Celular" class="form-label fw-bold">Celular</label>
+                                    <input asp-for="Celular" class="form-control" />
+                                    <span asp-validation-for="Celular" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="DireccionEmail" class="form-label fw-bold">Correo Electrónico</label>
+                                <input asp-for="DireccionEmail" type="email" class="form-control" required />
+                                <span asp-validation-for="DireccionEmail" class="text-danger small"></span>
+                            </div>
+
+                            <h5 class="text-success border-bottom pb-2 mb-3 mt-4">2. Ubicación de Residencia</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="DepartamentoId" class="form-label fw-bold">Departamento</label>
+                                    <select id="ddlDepartamento" asp-for="DepartamentoId" class="form-select" asp-items="ViewBag.Departamentos" required>
+                                        <option value="">-- Seleccione un Departamento --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="MunicipioId" class="form-label fw-bold">Municipio / Ciudad</label>
+                                    <select id="ddlMunicipio" asp-for="MunicipioId" class="form-select" asp-items="ViewBag.Municipios" required>
+                                        <option value="">-- Seleccione un Municipio --</option>
+                                    </select>
+                                    <span asp-validation-for="MunicipioId" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Barrio" class="form-label fw-bold">Barrio</label>
+                                    <input asp-for="Barrio" class="form-control" required />
+                                    <span asp-validation-for="Barrio" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-5 mb-3">
+                                    <label asp-for="DireccionResidencia" class="form-label fw-bold">Dirección de Residencia</label>
+                                    <input asp-for="DireccionResidencia" class="form-control" required />
+                                    <span asp-validation-for="DireccionResidencia" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label asp-for="TelefonoResidencia" class="form-label fw-bold">Teléfono Fijo</label>
+                                    <input asp-for="TelefonoResidencia" class="form-control" required />
+                                    <span asp-validation-for="TelefonoResidencia" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <h5 class="text-success border-bottom pb-2 mb-3 mt-4">3. Preferencias</h5>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input asp-for="AutorizaCorreo" class="form-check-input" type="checkbox" />
+                                        <label asp-for="AutorizaCorreo" class="form-check-label text-muted small">Autorizo envío de notificaciones al Correo Electrónico</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="AutorizaCelular" class="form-check-input" type="checkbox" />
+                                        <label asp-for="AutorizaCelular" class="form-check-label text-muted small">Autorizo envío de notificaciones vía Celular / SMS</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 me-md-2">Atrás</a>
+                                <button type="submit" class="btn btn-success btn-lg px-5">Guardar Cambios</button>
+                            </div>
+                        </form>
+
+                        <hr class="my-4" />
+                        <div class="d-flex justify-content-end mb-3">
+                            <form asp-action="EliminarCuenta" asp-controller="Account" method="post"
+                                  onsubmit="return confirm('¿Estás seguro de eliminar tu cuenta? Esta acción desactivará tu acceso.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger">Eliminar mi cuenta</button>
+                            </form>
+                        </div>
+                        <div class="alert alert-warning small">
+                            Al eliminar tu cuenta, se desactiva el acceso al sistema.
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>

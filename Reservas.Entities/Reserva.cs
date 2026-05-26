@@ -13,8 +13,6 @@ public partial class Reserva
 
     public int? EspacioId { get; set; }
 
-    public int? ReservaPadreId { get; set; }
-
     public string TipoReserva { get; set; } = null!;
 
     public DateOnly FechaInicio { get; set; }
@@ -34,10 +32,6 @@ public partial class Reserva
     public DateTime CreadoEn { get; set; }
 
     public virtual Espacio? Espacio { get; set; }
-
-    public virtual ICollection<Reserva> InverseReservaPadre { get; set; } = new List<Reserva>();
-
-    public virtual Reserva? ReservaPadre { get; set; }
 
     public virtual Sede Sede { get; set; } = null!;
 

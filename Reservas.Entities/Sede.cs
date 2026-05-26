@@ -25,11 +25,7 @@ public partial class Sede
 
     public virtual ICollection<Reserva> Reservas { get; set; } = new List<Reserva>();
 
-    public virtual ICollection<SedeImagen> SedeImagens { get; set; } = new List<SedeImagen>();
-
     public virtual ICollection<ServicioExtra> ServicioExtras { get; set; } = new List<ServicioExtra>();
 
     public virtual ICollection<TarifaConfig> TarifaConfigs { get; set; } = new List<TarifaConfig>();
-
-    public virtual ICollection<ServicioBienestar> ServicioBienestars { get; set; } = new List<ServicioBienestar>();
 }

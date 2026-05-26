@@ -82,6 +82,17 @@ namespace Reservas.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Debe seleccionar el tipo de reserva.");
             }
 
+            if (model.TipoReserva == "Visita Dia")
+            {
+                model.EspacioId = null;
+                model.FechaFin = model.FechaInicio;
+
+                if (model.Personas < 1 || model.Personas > 10)
+                {
+                    ModelState.AddModelError(string.Empty, "Para visita día el número de personas debe estar entre 1 y 10.");
+                }
+            }
+
             if (model.TipoReserva == "Hospedaje" && model.EspacioId == null)
             {
                 ModelState.AddModelError(string.Empty, "Debe seleccionar un alojamiento para hospedaje.");
@@ -92,7 +103,7 @@ namespace Reservas.Web.Controllers
                 ModelState.AddModelError(string.Empty, "La fecha de salida debe ser mayor a la fecha de llegada.");
             }
 
-            if (model.TipoReserva == "VisitaDia" && model.FechaFin < model.FechaInicio)
+            if (model.TipoReserva == "Visita Dia" && model.FechaFin < model.FechaInicio)
             {
                 ModelState.AddModelError(string.Empty, "La fecha de visita no puede ser anterior a la de llegada.");
             }
@@ -120,7 +131,6 @@ namespace Reservas.Web.Controllers
                 userId,
                 model.SedeId,
                 model.EspacioId,
-                model.ReservaPadreId,
                 model.TipoReserva,
                 model.FechaInicio,
                 model.FechaFin,
@@ -177,6 +187,17 @@ namespace Reservas.Web.Controllers
             if (fechaFin.Date < fechaInicio.Date || personas <= 0 || string.IsNullOrWhiteSpace(tipoReserva))
             {
                 return BadRequest();
+            }
+
+            if (tipoReserva == "Visita Dia")
+            {
+                if (personas > 10)
+                {
+                    return BadRequest();
+                }
+
+                espacioId = null;
+                fechaFin = fechaInicio;
             }
 
             if (tipoReserva == "Hospedaje" && espacioId == null)

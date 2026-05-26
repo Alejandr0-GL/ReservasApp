@@ -29,13 +29,8 @@
                             <label class="form-label small">Tipo de Reserva</label>
                             <select id="tipoReserva" name="TipoReserva" class="form-select form-select-sm" required>
                                 <option value="Hospedaje" selected>Hospedaje</option>
-                                <option value="VisitaDia">Visita Día</option>
+                                <option value="Visita Dia">Visita Día</option>
                             </select>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label small">Reserva Padre (opcional)</label>
-                            <input type="number" name="ReservaPadreId" class="form-control" min="1" />
                         </div>
 
                         <div class="mb-2">
@@ -53,6 +48,7 @@
                         <div class="mb-2">
                             <label class="form-label small">Personas</label>
                             <input type="number" name="Personas" id="personas" class="form-control" min="1" value="1" required />
+                            <div id="personasHelp" class="form-text small text-muted"></div>
                         </div>
 
                         <hr />
@@ -319,7 +315,7 @@
 
         function aplicarDisponibilidad(){
             var tipo = document.getElementById('tipoReserva');
-            var visita = tipo && tipo.value === 'VisitaDia';
+            var visita = tipo && tipo.value === 'Visita Dia';
 
             document.querySelectorAll('.disponibilidad').forEach(function(el){
                 var id = parseInt(el.getAttribute('data-espacio-id'));
@@ -350,10 +346,12 @@
 
         function aplicarTipoReserva(){
             var tipo = document.getElementById('tipoReserva');
-            var visita = tipo && tipo.value === 'VisitaDia';
+            var visita = tipo && tipo.value === 'Visita Dia';
             var inicioInput = document.getElementById('fechaInicio');
             var finInput = document.getElementById('fechaFin');
             var nochesInput = document.getElementById('noches');
+            var personasInput = document.getElementById('personas');
+            var personasHelp = document.getElementById('personasHelp');
 
             if (nochesInput) nochesInput.disabled = true;
 
@@ -363,14 +361,31 @@
                     if (inicioInput.value) finInput.value = inicioInput.value;
                     finInput.readOnly = true;
                 }
+
+                if (personasInput){
+                    personasInput.max = '10';
+                    if (parseInt(personasInput.value || '0') > 10){
+                        personasInput.value = '10';
+                    }
+                }
+
+                if (personasHelp){
+                    personasHelp.textContent = 'Máximo 10 personas para visita día.';
+                }
             } else {
                 if (finInput) finInput.readOnly = false;
+                if (personasInput){
+                    personasInput.removeAttribute('max');
+                }
+                if (personasHelp){
+                    personasHelp.textContent = '';
+                }
             }
         }
 
         function calcularNoches(){
             var tipo = document.getElementById('tipoReserva');
-            var visita = tipo && tipo.value === 'VisitaDia';
+            var visita = tipo && tipo.value === 'Visita Dia';
             var nochesInput = document.getElementById('noches');
 
             if (visita){
@@ -512,6 +527,7 @@
         }
 
         document.getElementById('fechaInicio')?.addEventListener('change', function(){
+            validarFechas();
             aplicarTipoReserva();
             consultarDisponibilidad();
             consultarTarifas();
@@ -519,6 +535,7 @@
         });
 
         document.getElementById('fechaFin')?.addEventListener('change', function(){
+            validarFechas();
             aplicarTipoReserva();
             consultarDisponibilidad();
             consultarTarifas();
@@ -562,6 +579,26 @@
                 });
             });
         })();
+
+        function validarFechas(){
+            var inicio = document.getElementById('fechaInicio');
+            var fin = document.getElementById('fechaFin');
+
+            if (!inicio || !fin) return;
+
+            if (inicio.value){
+                fin.min = inicio.value;
+            }
+
+            if (inicio.value && fin.value){
+                var dInicio = new Date(inicio.value);
+                var dFin = new Date(fin.value);
+
+                if (dFin < dInicio){
+                    fin.value = '';
+                }
+            }
+        }
 
         aplicarTipoReserva();
         consultarDisponibilidad();
